@@ -6,7 +6,7 @@ output: html_document
 
 ## Overview
 
-This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website. 
+This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website.
 
 # Background
 
