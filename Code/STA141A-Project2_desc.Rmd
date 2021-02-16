@@ -3,10 +3,20 @@ title: "Project 2 Description"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
+<!--
+To update Github with your own code: 
+1. PULL
+From the Git tab, “Pull” the repository. This makes sure your local repository is synced with the remote repository. This is very important if other people are making changes to the repository or if you are working from multiple computers. 
+2. STAGE
+Select (aka. stage) the files you want to commit. In RStudio, this involves checking the “Staged” boxes in the Git tab.
+3. COMMIT
+Try to add a note so everyone will know what you're changing. 
+4. PUSH
+Saves these local changes to the online repository.
+-->
 ## Overview
 
-This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website. 
+This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website.
 
 # Background
 
