@@ -8,7 +8,7 @@ To update Github with your own code:
 1. PULL
 From the Git tab, “Pull” the repository. This makes sure your local repository is synced with the remote repository. This is very important if other people are making changes to the repository or if you are working from multiple computers. 
 2. STAGE
-Select (aka. stage) the files you want to commit. In RStudio, this involves checking the “Staged” boxes in the Git tab.
+Select (aka. stage) the files you want to commit. In RStudio, this involves checking the “Staged” boxes in the Git tab. 
 3. COMMIT
 Try to add a note so everyone will know what you're changing. 
 4. PUSH
