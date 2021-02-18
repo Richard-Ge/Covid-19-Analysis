@@ -71,6 +71,8 @@ library(lubridate)
 head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
 covid20 = covid %>% filter(Date_reported < "2021-01-01") # View(covid20)
+covid21 = covid %>% filter(Date_reported >= "2021-01-01")
+totalcases = NULL  ## TODO: mutate covid dataframe with country population first! get summary statistics e.g. total deaths (+ per region), percent of country infected, 
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
