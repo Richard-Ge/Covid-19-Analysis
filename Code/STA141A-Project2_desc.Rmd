@@ -70,9 +70,18 @@ library(tidyverse)
 library(lubridate)
 head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
+## TODO: mutate covid dataframe with country population! get summary statistics e.g. total deaths (+ per region), percent of country infected, 
+
 covid20 = covid %>% filter(Date_reported < "2021-01-01") # View(covid20)
 covid21 = covid %>% filter(Date_reported >= "2021-01-01")
-totalcases = NULL  ## TODO: mutate covid dataframe with country population first! get summary statistics e.g. total deaths (+ per region), percent of country infected, 
+totalcases = NULL  ## TODO
+
+# Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
+time_since_start = max(covid$Date_reported) - min(covid$Date_reported)
+recent_data = filter(covid21, Date_reported == "2021-02-20")
+total_cases = sum(recent_data$Cumulative_cases)
+total_deaths = sum(recent_data$Cumulative_deaths)
+total_mortality = total_deaths/total_cases
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
