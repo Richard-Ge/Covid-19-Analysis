@@ -68,20 +68,33 @@ library(usethis)
 library(tidyverse)
     covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
 library(lubridate)
+# install.packages("rvest")
+library(rvest)
+
+
 head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
-## TODO: mutate covid dataframe with country population! get summary statistics e.g. total deaths (+ per region), percent of country infected, 
 
-covid20 = covid %>% filter(Date_reported < "2021-01-01") # View(covid20)
-covid21 = covid %>% filter(Date_reported >= "2021-01-01")
-totalcases = NULL  ## TODO
+pop.data = read.csv("~/Documents/STA141A-pop-data.csv", row.names=1)
+pop.data = pop.data[85, 1] = "Dominica"
+sort(pop.data$Country)
+newcovid = left_join(covid, pop.data, by = c("Country"))
+# View(newcovid); View(pop.data)   # confused: saw the same pop. many times
+sum(is.na(newcovid$Population))
+## TODO: mutate missing/different names! get summary statistics e.g. total deaths (+ per region), percent of country infected,
+
+covid20 = newcovid %>% filter(Date_reported < "2021-01-01") # View(covid20)
+covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
+
 
 # Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
-time_since_start = max(covid$Date_reported) - min(covid$Date_reported)
-recent_data = filter(covid21, Date_reported == "2021-02-20")
-total_cases = sum(recent_data$Cumulative_cases)
-total_deaths = sum(recent_data$Cumulative_deaths)
-total_mortality = total_deaths/total_cases
+time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
+recent.data = filter(covid21, Date_reported == "2021-02-20")
+total.cases = sum(recent_data$Cumulative_cases)
+total.deaths = sum(recent_data$Cumulative_deaths)
+total.mortality = total_deaths/total_cases
+## TODO: look at all the NA elements in recent_data, replace the names in pop.data with the new names in recent.data
+View(recent.data); View(pop.data)
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
