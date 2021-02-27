@@ -86,22 +86,29 @@ pop.data[50, 1] = "Venezuela (Bolivarian Republic of)"
 pop.data[81, 1] = "Bolivia (Plurinational State of)"
 pop.data[86, 1] = "Czechia"
 newcovid = left_join(covid, pop.data, by = c("Country"))
-# View(newcovid); View(pop.data)   # confused: saw the same pop. many times
-sum(is.na(newcovid$Population))
+# View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
+newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
+worldpop = sum(unique(newcovid$Population), na.rm = T)     # having NA values makes output NA too
+newcovid = mutate(newcovid, 
+                  prcCNew=New_cases*100/Population,             # new cases/its pop -> %
+                  prcCTotal=Cumulative_cases*100/Population,    # total cases/its pop -> %
+                  prcDNew=New_deaths*100/Population,            # new deaths/its pop -> %
+                  prcDTotal=Cumulative_deaths*100/Population,)  # total deaths/its pop -> %
+View(newcovid)
 ## TODO: mutate missing/different names! get summary statistics e.g. total deaths (+ per region), percent of country infected,
 
-covid20 = newcovid %>% filter(Date_reported < "2021-01-01") # View(covid20)
+covid20 = newcovid %>% filter(Date_reported < "2021-01-01")  # View(covid20)
 covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
 
 
 # Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
 time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
-recent.data = filter(covid21, Date_reported == "2021-02-20")
-total.cases = sum(recent_data$Cumulative_cases)
-total.deaths = sum(recent_data$Cumulative_deaths)
-total.mortality = total_deaths/total_cases
+recent.data = filter(covid21, Date_reported == "2021-2-26")  # today()
+ov.total.cases = sum(recent.data$Cumulative_cases)
+ov.total.deaths = sum(recent.data$Cumulative_deaths)
+ov.total.mortality = ov.total.deaths/ov.total.cases
 ## TODO: look at all the NA elements in recent_data, replace the country names in pop.data with the new names in recent.data
-View(recent.data); View(pop.data)
+View(recent.data); View(pop.data); View(covid21)
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
@@ -111,11 +118,16 @@ View(recent.data); View(pop.data)
 
 ```{r}
 # we can do: 
-## simple linreg for the whole time, or for each year/month/week
+## simple linreg (+ x-var squared?) for the whole time, or for each year/month/week
 ### we might be able to GROUP these months/weeks to satisfy condition B
 ### or PCA the countries for dimension reduction! <ASK PROF: what do the PC's even mean?> youtube.com/watch?v=VjsO5bLe4yg
 ### data is specifically the # or % of new cases
 ## time series model? towardsdatascience.com/the-complete-guide-to-time-series-analysis-and-forecasting-70d476bfe775
+
+# We have (2) dimensions of (419+each_day/188+extra_countries) predictors we can analyze: date, country
+# We have (1) dimension of (4) outcomes we can analyze: % new/total cases/deaths
+# I'm thinking, if we do PCA, we can have "countries" as PCs and "% new cases" as the data, kind of like how we did PCA for babynames. Either way, can we only decrease one dimension of variables (e.g. which countries/dates contribute most)? Or can we PCA two dimensions of variables at once (e.g. which countries AND dates contribute most)? 
+  ## maybe find which days/countries were most severe, and then do further analysis? could this just end up finding the max of each?
 ```
 
 5.  Fit the proposed model in (4) and explain your results. 
