@@ -86,6 +86,7 @@ pop.data[50, 1] = "Venezuela (Bolivarian Republic of)"
 pop.data[81, 1] = "Bolivia (Plurinational State of)"
 pop.data[86, 1] = "Czechia"
 newcovid = left_join(covid, pop.data, by = c("Country"))
+    # put new populations here, by name
 # View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
 newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
 worldpop = sum(unique(newcovid$Population), na.rm = T)     # having NA values makes output NA too
@@ -122,6 +123,7 @@ View(recent.data); View(pop.data); View(covid21)
 ### we might be able to GROUP these months/weeks to satisfy condition B
 ### or PCA the countries for dimension reduction! <ASK PROF: what do the PC's even mean?> youtube.com/watch?v=VjsO5bLe4yg
 ### data is specifically the # or % of new cases
+### analyze countries with negative values separately?
 ## time series model? towardsdatascience.com/the-complete-guide-to-time-series-analysis-and-forecasting-70d476bfe775
 
 # We have (2) dimensions of (419+each_day/188+extra_countries) predictors we can analyze: date, country
@@ -133,7 +135,18 @@ View(recent.data); View(pop.data); View(covid21)
 5.  Fit the proposed model in (4) and explain your results. 
 
 ```{r}
+# lm for everything
+totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
+plot(newcovid$Date_reported, newcovid$prcCNew)
+ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
+  geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
+  geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
 
+# lm for this year
+LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
+ggplot(data=covid21 %>% group_by(covid21$Country)) + 
+  geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
+  geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
 ```
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
