@@ -70,12 +70,13 @@ library(tidyverse)
 library(lubridate)
 # install.packages("rvest")
 library(rvest)
+```
 
-
+```{r}
 head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
 
-pop.data = read.csv("~/Documents/STA141A-pop-data.csv", row.names=1)
+pop.data = read.csv("~/Documents/STA141A-pop-data.csv", row.names=1)  # View(pop.data)
 # renaming
 pop.data[85, 1] = "Dominican Republic"
 pop.data[188, 1] = "American Samoa"
@@ -85,6 +86,14 @@ pop.data[21, 1] = "The United Kingdom"
 pop.data[50, 1] = "Venezuela (Bolivarian Republic of)"
 pop.data[81, 1] = "Bolivia (Plurinational State of)"
 pop.data[86, 1] = "Czechia"
+pop.data = rbind(pop.data, Country = c("Andorra", as.numeric(77543)))
+pop.data = rbind(pop.data, Country = c("Latvia", as.numeric(1907675)))
+pop.data = rbind(pop.data, Country = c("Liechtenstein", as.numeric(38250)))
+pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
+pop.data = rbind(pop.data, Country = c("Monaco", as.numeric(38300)))
+pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
+pop.data = rbind(pop.data, Country = c("Russia", as.numeric(146238185)))
+pop.data = mutate(pop.data, Population = as.numeric(Population))  # ^^^ gets inputted as char for some reason
 newcovid = left_join(covid, pop.data, by = c("Country"))
     # put new populations here, by name
 # View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
@@ -104,12 +113,15 @@ covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
 
 # Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
 time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
-recent.data = filter(covid21, Date_reported == "2021-2-26")  # today()
+recent.data = filter(covid21, Date_reported == "2021-2-28")  # today()
 ov.total.cases = sum(recent.data$Cumulative_cases)
 ov.total.deaths = sum(recent.data$Cumulative_deaths)
 ov.total.mortality = ov.total.deaths/ov.total.cases
+ov.mean.cases = sum(newcovid$prcCNew)/422
+ov.median.cases = median(newcovid$prcCNew)
 ## TODO: look at all the NA elements in recent_data, replace the country names in pop.data with the new names in recent.data
 View(recent.data); View(pop.data); View(covid21)
+UScovid = filter(newcovid, Country_code=="US")
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
@@ -118,35 +130,56 @@ View(recent.data); View(pop.data); View(covid21)
       c. Explain why your model is appropriate for this task. 
 
 ```{r}
+# creating dataset for "EU pre-existing markers" model:
+
+EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
+nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
+europecovid = filter(newcovid, newcovid$Country %in% c(EUcountries, nonEUcountries))
+sort(c(EUcountries, nonEUcountries))
+sort(unique(europecovid$Country))
+mutate(europecovid, Population = )
+
 # we can do: 
 ## simple linreg (+ x-var squared?) for the whole time, or for each year/month/week
+  # can we do many models instead of just 1?
 ### we might be able to GROUP these months/weeks to satisfy condition B
 ### or PCA the countries for dimension reduction! <ASK PROF: what do the PC's even mean?> youtube.com/watch?v=VjsO5bLe4yg
+  # does PCA count as a model? or do we just use it to select the most important variables?
+  # analyze countries/regions separately from each other?
 ### data is specifically the # or % of new cases
-### analyze countries with negative values separately?
+  # analyze countries with negative values separately? what do we do?
 ## time series model? towardsdatascience.com/the-complete-guide-to-time-series-analysis-and-forecasting-70d476bfe775
+    ## CHANGE THE QUESTION that we want to answer, in order to avoid needing time series analysis! <?>
 
 # We have (2) dimensions of (419+each_day/188+extra_countries) predictors we can analyze: date, country
 # We have (1) dimension of (4) outcomes we can analyze: % new/total cases/deaths
 # I'm thinking, if we do PCA, we can have "countries" as PCs and "% new cases" as the data, kind of like how we did PCA for babynames. Either way, can we only decrease one dimension of variables (e.g. which countries/dates contribute most)? Or can we PCA two dimensions of variables at once (e.g. which countries AND dates contribute most)? 
-  ## maybe find which days/countries were most severe, and then do further analysis? could this just end up finding the max of each?
+  ## maybe find which days/countries were most severe, and then do further analysis? could this just end up finding the max of each? FIND LOCKDOWN INFO!
 ```
 
 5.  Fit the proposed model in (4) and explain your results. 
 
 ```{r}
-# lm for everything
+# lm for everything (dont use this!)
 totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
 plot(newcovid$Date_reported, newcovid$prcCNew)
 ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
   geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
   geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
 
-# lm for this year
+# lm for this year (dont use this!)
 LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
 ggplot(data=covid21 %>% group_by(covid21$Country)) + 
   geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
   geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
+
+# moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
+#https://financetrain.com/estimating-moving-average-ma-model-in-r/
+US_MA = arima(x=UScovid$prcCNew)  #another var?
+US_MA; summary(US_MA)
+ts.plot(UScovid$prcCNew)
+resids = US_MA$residuals
+ts.plot(resids)
 ```
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
