@@ -84,6 +84,8 @@ elderly = read_tsv("~/Documents/elderly2017WB.tsv")
     elderly = elderly %>% transmute(Country=elderly$Country,ElderlyPrc=elderly$`c-65+`) %>% data.frame()
 healthcare = read_tsv("~/Documents/healthcare.tsv")
     healthcare = healthcare %>% transmute(Country=healthcare$Country,HCSpentPerCap=healthcare$pc2018) %>% data.frame()
+aqis = read_tsv("~/Documents/country-aqi.tsv")
+    # no need to transmute
 # renaming
 pop.data[85, 1] = "Dominican Republic"
 pop.data[188, 1] = "American Samoa"
@@ -114,6 +116,8 @@ newcovid = left_join(covid, pop.data, by = c("Country"))
 newcovid = left_join(newcovid, obesity, by = c("Country"))
 newcovid = left_join(newcovid, elderly, by = c("Country"))
 newcovid = left_join(newcovid, healthcare, by = c("Country"))
+newcovid = left_join(newcovid, aqis, by = c("Country"))
+
     # put new populations here, by name
 # View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
 newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
@@ -159,7 +163,7 @@ europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recen
 # mutate(europecovid, Population = )
 
 groups = as.data.table(europecovid)
-# get highest days of new/total cases and new/total deaths
+    # get highest days of new/total cases and new/total deaths
 #europe.highest.CNew = groups[groups[, .I[prcCNew == max(prcCNew)], by=Country]$V1]
 #europe.highest.CTotal = groups[groups[, .I[prcCTotal == max(prcCTotal)], by=Country]$V1]
 #europe.highest.DNew = groups[groups[, .I[prcDNew == max(prcDNew)], by=Country]$V1]
@@ -192,12 +196,13 @@ europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$pr
 ```{r}
 #dont use CNew, CTotal, DNew yet because the day-to-day variation is too high, or the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 
-preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+SpendingPerCap, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
+preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
 
 
 plot(europe.highest.DTotal$ObesityPrc, europe.highest.DTotal$prcDTotal)
 plot(europe.highest.DTotal$ElderlyPrc, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DTotal$SpendingPerCap, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$HCSpentPerCap, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$AQI, europe.highest.DTotal$prcDTotal)
 
 # lm for everything (dont use this!)
 #totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
