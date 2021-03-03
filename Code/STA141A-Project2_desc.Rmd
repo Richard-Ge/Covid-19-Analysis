@@ -70,6 +70,7 @@ library(tidyverse)
 library(lubridate)
 # install.packages("rvest")
 library(rvest)
+library(data.table)
 ```
 
 ```{r}
@@ -81,6 +82,8 @@ obesity = read_tsv("~/Documents/obesity.tsv")
     obesity = obesity %>% transmute(Country=obesity$Country,ObesityPrc=obesity$Obesity_rate) %>% data.frame()
 elderly = read_tsv("~/Documents/elderly2017WB.tsv")
     elderly = elderly %>% transmute(Country=elderly$Country,ElderlyPrc=elderly$`c-65+`) %>% data.frame()
+healthcare = read_tsv("~/Documents/healthcare.tsv")
+    healthcare = healthcare %>% transmute(Country=healthcare$Country,HCSpentPerCap=healthcare$pc2018) %>% data.frame()
 # renaming
 pop.data[85, 1] = "Dominican Republic"
 pop.data[188, 1] = "American Samoa"
@@ -92,9 +95,9 @@ pop.data[81, 1] = "Bolivia (Plurinational State of)"
 pop.data[86, 1] = "Czechia"
 pop.data = rbind(pop.data, Country = c("Andorra", as.numeric(77543)))
 pop.data = rbind(pop.data, Country = c("Latvia", as.numeric(1907675)))
-pop.data = rbind(pop.data, Country = c("Liechtenstein", as.numeric(38250)))
+# pop.data = rbind(pop.data, Country = c("Liechtenstein", as.numeric(38250)))
 pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
-pop.data = rbind(pop.data, Country = c("Monaco", as.numeric(38300)))
+# pop.data = rbind(pop.data, Country = c("Monaco", as.numeric(38300)))
 pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
 pop.data = rbind(pop.data, Country = c("Russia", as.numeric(146238185)))
 pop.data = mutate(pop.data, Population = as.numeric(Population))  # ^^^ gets inputted as char for some reason
@@ -105,10 +108,12 @@ elderly = rbind(elderly, Country = c("Andorra", as.numeric(17.4)))
 elderly[46, 1] = "Czechia"
 elderly[182, 1] = "The United Kingdom"
 elderly = mutate(elderly, ElderlyPrc = as.numeric(ElderlyPrc))
+# for the healthcare data, i realized that i could just edit the tsv itself...no need for all those reassignments...
 
 newcovid = left_join(covid, pop.data, by = c("Country"))
 newcovid = left_join(newcovid, obesity, by = c("Country"))
 newcovid = left_join(newcovid, elderly, by = c("Country"))
+newcovid = left_join(newcovid, healthcare, by = c("Country"))
     # put new populations here, by name
 # View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
 newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
@@ -127,7 +132,7 @@ covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
 
 # Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
 time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
-recent.data = filter(covid21, Date_reported == "2021-2-28")  # today()
+recent.data = filter(covid21, Date_reported == Sys.Date()-1)  # or today()
 ov.total.cases = sum(recent.data$Cumulative_cases)
 ov.total.deaths = sum(recent.data$Cumulative_deaths)
 ov.total.mortality = ov.total.deaths/ov.total.cases
@@ -150,10 +155,21 @@ EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia"
 nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
 europecovid = filter(newcovid, newcovid$Country %in% c(EUcountries, nonEUcountries))
   sort(c(EUcountries, nonEUcountries)); sort(unique(europecovid$Country))
-recent.europe = filter(europecovid, Date_reported == "2021-2-28")  # View(recent.europe)
+europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recent.europe)
 # mutate(europecovid, Population = )
 
-# we can do: 
+groups = as.data.table(europecovid)
+# get highest days of new/total cases and new/total deaths
+#europe.highest.CNew = groups[groups[, .I[prcCNew == max(prcCNew)], by=Country]$V1]
+#europe.highest.CTotal = groups[groups[, .I[prcCTotal == max(prcCTotal)], by=Country]$V1]
+#europe.highest.DNew = groups[groups[, .I[prcDNew == max(prcDNew)], by=Country]$V1]
+europe.highest.DTotal = groups[groups[, .I[prcDTotal == unique(max(prcDTotal))], by=Country]$V1]
+dim(europe.highest.DTotal); length(unique(europe.highest.DTotal$prcDTotal)) # many repeats!
+europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$prcDTotal), ]  # from stackoverflow
+
+# View(filter(europecovid, Country=="Finland"))     View(europe.highest)
+
+# OLD PLANS: 
 ## simple linreg (+ x-var squared?) for the whole time, or for each year/month/week
   # can we do many models instead of just 1?
 ### we might be able to GROUP these months/weeks to satisfy condition B
@@ -174,26 +190,35 @@ recent.europe = filter(europecovid, Date_reported == "2021-2-28")  # View(recent
 5.  Fit the proposed model in (4) and explain your results. 
 
 ```{r}
+#dont use CNew, CTotal, DNew yet because the day-to-day variation is too high, or the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
+
+preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+SpendingPerCap, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
+
+
+plot(europe.highest.DTotal$ObesityPrc, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$ElderlyPrc, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$SpendingPerCap, europe.highest.DTotal$prcDTotal)
+
 # lm for everything (dont use this!)
-totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
-plot(newcovid$Date_reported, newcovid$prcCNew)
-ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
-  geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
-  geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
+#totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
+#plot(newcovid$Date_reported, newcovid$prcCNew)
+#ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
+#  geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
+#  geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
 
 # lm for this year (dont use this!)
-LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
-ggplot(data=covid21 %>% group_by(covid21$Country)) + 
-  geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
-  geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
+#LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
+#ggplot(data=covid21 %>% group_by(covid21$Country)) + 
+#  geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
+#  geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
 
 # moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
-#https://financetrain.com/estimating-moving-average-ma-model-in-r/
-US_MA = arima(x=UScovid$prcCNew)  #another var?
-US_MA; summary(US_MA)
-ts.plot(UScovid$prcCNew)
-resids = US_MA$residuals
-ts.plot(resids)
+# https://financetrain.com/estimating-moving-average-ma-model-in-r/
+#US_MA = arima(x=UScovid$prcCNew)  #another var?
+#US_MA; summary(US_MA)
+#ts.plot(UScovid$prcCNew)
+#resids = US_MA$residuals
+#ts.plot(resids)
 ```
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
