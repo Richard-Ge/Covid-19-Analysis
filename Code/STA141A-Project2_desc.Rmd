@@ -61,7 +61,7 @@ The following list provides one potential structure of the data analysis report.
 
 3. Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
 <!-- RAHUL AND I START WITH THIS ONE -->
-```{r}
+```{r, echo=FALSE}
 # install.packages("usethis")
 library(usethis)
     use_git_config(user.name = "Richard-Ge", user.email = "richardge951@gmail.com")
@@ -73,7 +73,7 @@ library(rvest)
 library(data.table)
 ```
 
-```{r}
+```{r, echo=FALSE}
 head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
 
@@ -139,22 +139,70 @@ newcovid = mutate(newcovid,
                   prcDTotal=Cumulative_deaths*100/Population, # total deaths/pop -> %
                   mortality.now=Cumulative_deaths/Cumulative_cases)  
 # View(newcovid)
-## TODO: get summary statistics e.g. total deaths (+ per region), percent of country infected,
+## TODO: get summary statistics e.g. total deaths (+ per region), percent of country infected, etc. Make a table called "summary statistics" and name the columns!
 
 covid20 = newcovid %>% filter(Date_reported < "2021-01-01")  # View(covid20)
 covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
 
 
-# Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
 time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
 recent.data = filter(covid21, Date_reported == Sys.Date()-1)  # or today()
-ov.total.cases = sum(recent.data$Cumulative_cases)
-ov.total.deaths = sum(recent.data$Cumulative_deaths)
-ov.total.mortality = ov.total.deaths/ov.total.cases
-ov.mean.cases = sum(newcovid$prcCNew)/422
-ov.median.cases = median(newcovid$prcCNew)
-# View(recent.data); View(pop.data); View(covid21)
-UScovid = filter(newcovid, Country_code=="US")
+# creating dataset for "europe pre-existing markers" model:
+EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
+nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
+europecovid = filter(newcovid, newcovid$Country %in% c(EUcountries, nonEUcountries))
+ # sort(c(EUcountries, nonEUcountries)); sort(unique(europecovid$Country))
+europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recent.europe)
+    # latvia is reported twice?
+# mutate(europecovid, Population = )
+
+
+# Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
+eu.total.cases = sum(europe.recent$Cumulative_cases)
+eu.total.deaths = sum(europe.recent$Cumulative_deaths)
+eu.total.mortality = eu.total.deaths*100/eu.total.cases
+eu.mean.cases = sum(europecovid$prcCNew)/422
+eu.median.cases = median(europecovid$prcCNew)
+eu.stats = data.frame(eu.total.cases, eu.total.deaths, eu.total.mortality, eu.mean.cases, eu.median.cases)
+names(eu.stats) = c("Total Cases", "Total Deaths", "Total Mortality (as %)", "Mean of % Changes in Case Numbers", "Median of % Changes in Case Numbers")
+# View(europe.recent); View(pop.data); View(covid21)
+### time since first case, cases, prc. of total cases, deaths, prc. of total deaths, mortality rate
+time.since.first.case = c(0, 0, 0)
+cases = c(0, 0)
+prc.total.cases = c(0, 0, 0)
+deaths = c(0, 0)
+prc.total.deaths = c(0, 0, 0)
+mortality.rate = c(0, 0, 0)
+summarystats = data.frame(cases, deaths, row.names=c("Selected EU countries", "Selected Non-EU Countries"))
+europop = sum(europe.recent$Population)
+for(country1 in unique(europecovid$Country)){
+  # print(country)
+  if((country1 %in% EUcountries)) {
+    thiscountry = filter(europe.recent, Country==country1)
+    summarystats[1,1] = summarystats[1,1] + unique(thiscountry$Cumulative_cases)
+    #summarystats[1,2] = summarystats[1,2] + unique(thiscountry$Cumulative_cases)*100/europop
+    summarystats[1,2] = summarystats[1,2] + unique(thiscountry$Cumulative_deaths)
+    #summarystats[1,4] = summarystats[1,4] + unique(thiscountry$Cumulative_deaths)*100/europop
+    # summarystats[1,5] = summarystats[1,5] + unique(thiscountry$mortality.now)
+    # print(cat("EU:  ", country1, unique(thiscountry$Cumulative_cases)))
+  } 
+  if((country1 %in% nonEUcountries)){
+    thiscountry = filter(europe.recent, Country==country1)
+    summarystats[2,1] = summarystats[2,1] + unique(thiscountry$Cumulative_cases)
+    #summarystats[2,2] = summarystats[2,2] + unique(thiscountry$Cumulative_cases)*100/europop
+    summarystats[2,2] = summarystats[2,2] + unique(thiscountry$Cumulative_deaths)
+    #summarystats[2,4] = summarystats[2,4] + unique(thiscountry$Cumulative_deaths)*100/europop
+    # summarystats[2,5] = summarystats[2,5] + unique(thiscountry$mortality.now)
+    # print(cat("Not: ", country1, unique(thiscountry$Cumulative_cases)))
+  }
+}
+#summarystats[3,1] = summarystats[1,1] + summarystats[2,1]
+#summarystats[3,2] = (summarystats[1,1] + summarystats[2,1])*100/sum(europe.recent$Population)
+#summarystats[3,2] = summarystats[1,2] + summarystats[2,2]
+#summarystats[3,4] = summarystats[1,4] + summarystats[2,4]
+#summarystats[3,5] = summarystats[1,5] + summarystats[2,5]
+names(summarystats) = c("Total Cases", "Total Deaths")
+eu.stats; summarystats
 ```
 
 4.  Propose an appropriate model to answer the questions of interest. 
@@ -164,25 +212,20 @@ UScovid = filter(newcovid, Country_code=="US")
 
 One model we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
 
-There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation, while the index $p$ denotes the $p$'th predictor ($p=0$ denotes the intercept of the model).
+There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuing countries, while the intercept of the model is at $p=0$).
+
+The assumptions are as follows: there is a linear relationship between the predictor and outcome variables, the variables are independent from each other, no multicollinearity, and the residuals are linear and normally distributed. 
+
+This model is ideal for analyzing what pre-COVID metrics of a country are associated with the current mortality rate, because all of the variables are continuous. Furthermore, there is only one outcome variable, and many possible predictor variables, which are well-suited to linear dimension reduction methods. 
 
 The second model we will use is the analysis of variance model, which is defined as follows: $$$$
 
-```{r}
-# creating dataset for "europe pre-existing markers" model:
-
-EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
-nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
-europecovid = filter(newcovid, newcovid$Country %in% c(EUcountries, nonEUcountries))
- # sort(c(EUcountries, nonEUcountries)); sort(unique(europecovid$Country))
-europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recent.europe)
-# mutate(europecovid, Population = )
-
+```{r, echo=FALSE}
 
 groups = as.data.table(europecovid)
     # get highest days of new/total cases and new/total deaths
 europe.highest.CNew = groups[groups[, .I[prcCNew==max(prcCNew)], by=Country]$V1]
-dim(europe.highest.CNew);length(unique(europe.highest.CNew$prcCNew)) # no repeats
+#dim(europe.highest.CNew);length(unique(europe.highest.CNew$prcCNew)) # no repeats
 europe.highest.CNew = europe.highest.CNew %>% mutate(  #orig. HC, med.wealth only
   HCSpentPerCap = scale(HCSpentPerCap), 
   med.wealth=scale(med.wealth), 
@@ -194,7 +237,7 @@ europe.highest.CNew = europe.highest.CNew %>% mutate(  #orig. HC, med.wealth onl
   )
 
 europe.highest.CTotal = groups[groups[, .I[prcCTotal==max(prcCTotal)], by=Country]$V1]
-dim(europe.highest.CTotal);length(unique(europe.highest.CTotal$prcCTotal)) # a few repeats!
+#dim(europe.highest.CTotal);length(unique(europe.highest.CTotal$prcCTotal)) # a few repeats!
 europe.highest.CTotal=europe.highest.CTotal[!duplicated(europe.highest.CTotal$prcCTotal), ]  # from stackoverflow
 europe.highest.CTotal = europe.highest.CTotal %>% mutate(  #orig. HC, med.wealth only
   HCSpentPerCap = scale(HCSpentPerCap), 
@@ -204,10 +247,10 @@ europe.highest.CTotal = europe.highest.CTotal %>% mutate(  #orig. HC, med.wealth
   AQI=scale(AQI),
   km.density=scale(km.density),
   prcCTotal=scale(prcCTotal),
-  )
+)
 
 europe.highest.DNew = groups[groups[, .I[prcDNew==max(prcDNew)], by=Country]$V1]
-dim(europe.highest.DNew);length(unique(europe.highest.DNew$prcDNew)) # a few repeats!
+#dim(europe.highest.DNew);length(unique(europe.highest.DNew$prcDNew)) # a few repeats!
 europe.highest.DNew=europe.highest.DNew[!duplicated(europe.highest.DNew$prcDNew), ]
 europe.highest.DNew = europe.highest.DNew %>% mutate( 
   HCSpentPerCap = scale(HCSpentPerCap), 
@@ -220,7 +263,7 @@ europe.highest.DNew = europe.highest.DNew %>% mutate(
   )
 
 europe.highest.DTotal = groups[groups[, .I[prcDTotal==unique(max(prcDTotal))], by=Country]$V1]
-dim(europe.highest.DTotal);length(unique(europe.highest.DTotal$prcDTotal)) # many repeats!
+#dim(europe.highest.DTotal);length(unique(europe.highest.DTotal$prcDTotal)) # many repeats!
 europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$prcDTotal), ]
 europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth only
   HCSpentPerCap = scale(HCSpentPerCap), 
@@ -257,7 +300,7 @@ europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth
 
 5.  Fit the proposed model in (4) and explain your results. 
 
-```{r}
+```{r, echo=FALSE}
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 #### We will use mortality rate as the outcome variable because it doesn't just go up all the time, instead staying at a specific rate that can only go up or down very slightly. TODO: add "change in mortality" as a variable?
 
@@ -271,7 +314,7 @@ preCOVIDtoMort = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.den
 
 # try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in. redo models with mortality rate?
 withoutmaltaEtc = europe.recent[-c(28, 40),]  # removed malta, maybe also netherlands/belgium for density, switzerland for income, as outliers?
-mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=withoutmaltaEtc); summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
+mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=withoutmaltaEtc); summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
 
 plot(europe.recent$ObesityPrc, europe.recent$mortality.now)
 plot(europe.recent$ElderlyPrc, europe.recent$mortality.now)
@@ -283,18 +326,12 @@ plot(europe.recent$med.wealth, europe.recent$mortality.now)
 plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now)
 plot(europe.recent$HDIadj, europe.recent$mortality.now)
 
-# lm for everything (dont use this!)
-#totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
-#plot(newcovid$Date_reported, newcovid$prcCNew)
-#ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
-#  geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
-#  geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
-
-# lm for this year (dont use this!)
-#LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
-#ggplot(data=covid21 %>% group_by(covid21$Country)) + 
-#  geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
-#  geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
+woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most missing values
+eu.pca = select(woMaltafiltered, -c("Date_reported", "Country", "Country_code", "WHO_region")) %>% prcomp(center=TRUE, scale=TRUE)
+plot(eu.pca, type="lines")
+# pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x)))
+# woMfilt.long = pivot_longer(pca.frame, cols=!country, names_to="PC", values_to="Coefficient")
+# woMfilt.long %>% filter(PC %in% c('PC1','PC2','PC3','PC4','PC5','PC6','PC7')) %>% ggplot(aes(x=country, y=Coefficient, colour = PC)) + geom_line()
 
 # moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
 # https://financetrain.com/estimating-moving-average-ma-model-in-r/
@@ -307,14 +344,16 @@ plot(europe.recent$HDIadj, europe.recent$mortality.now)
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
 
-```{r}
+```{r, echo=FALSE}
 
 ```
 
 7. Conclude your analysis with a discussion of your findings and caveats of your approach. 
 
-```{r}
+```{r, echo=FALSE}
 
 ```
 
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 
+```
