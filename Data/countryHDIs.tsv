@@ -1,0 +1,154 @@
+Country	HDI.ineq	HDI	loss.in.HDI
+Norway	0.899	0.957	6.1
+Iceland	0.894	0.949	5.8
+Switzerland	0.889	0.955	6.9
+Finland	0.888	0.938	5.3
+Ireland	0.885	0.955	7.3
+Denmark	0.883	0.940	6.1
+Sweden	0.882	0.945	6.7
+Netherlands	0.878	0.944	7.0
+Slovenia	0.875	0.917	4.6
+Germany	0.869	0.947	8.2
+Australia	0.867	0.944	8.2
+Czechia	0.860	0.900	4.4
+Belgium	0.859	0.931	7.7
+New Zealand	0.859	0.931	7.7
+Austria	0.857	0.922	7.0
+The United Kingdom	0.856	0.932	8.2
+Canada	0.848	0.929	8.7
+Japan	0.843	0.919	8.3
+Estonia	0.829	0.882	7.1
+Luxembourg	0.826	0.916	9.8
+Hong Kong	0.824	0.949	13.2
+Malta	0.823	0.895	8.0
+France	0.820	0.901	9.0
+South Korea	0.815	0.916	11.0
+Israel	0.814	0.919	11.4
+Singapore	0.813	0.938	13.3
+Poland	0.813	0.880	7.6
+United States	0.808	0.926	12.7
+Slovakia	0.807	0.860	6.2
+Cyprus	0.805	0.887	9.2
+Hungary	0.791	0.854	7.4
+Lithuania	0.791	0.882	10.3
+Greece	0.791	0.888	10.9
+Italy	0.783	0.892	12.2
+Latvia	0.783	0.866	9.6
+Croatia	0.783	0.851	8.0
+Spain	0.783	0.904	13.4
+Belarus	0.771	0.823	6.3
+Kazakhstan	0.766	0.825	7.2
+Portugal	0.761	0.850	12.7
+Montenegro	0.749	0.829	9.7
+Russia	0.740	0.824	10.2
+Romania	0.730	0.828	11.8
+Argentina	0.729	0.845	13.7
+Ukraine	0.728	0.779	6.4
+Bulgaria	0.721	0.816	11.6
+Georgia	0.716	0.812	11.8
+Uruguay	0.712	0.817	12.7
+Chile	0.709	0.851	16.7
+Albania	0.708	0.795	10.9
+Oman	0.706	0.813	13.2
+Serbia	0.705	0.806	12.5
+Armenia	0.699	0.776	9.9
+Mauritius	0.694	0.804	13.7
+Iran	0.693	0.783	11.5
+Azerbaijan	0.684	0.756	9.5
+Turkey	0.683	0.820	16.7
+North Macedonia	0.681	0.774	12.0
+Barbados	0.676	0.814	17.0
+Sri Lanka	0.673	0.782	13.9
+Moldova	0.672	0.750	10.4
+Seychelles	0.670	0.796	15.8
+Bosnia and Herzegovina	0.667	0.780	14.5
+Costa Rica	0.661	0.810	18.4
+Thailand	0.646	0.777	16.9
+Panama	0.643	0.815	21.1
+China	0.639	0.761	16.0
+Mongolia	0.634	0.737	14.0
+Kyrgyzstan	0.630	0.697	9.6
+Saint Lucia	0.629	0.759	17.1
+Peru	0.628	0.777	19.2
+Jordan	0.622	0.729	14.7
+Ecuador	0.616	0.759	18.8
+Palestine	0.613	0.708	13.4
+Mexico	0.613	0.779	21.3
+Jamaica	0.612	0.734	16.6
+Algeria	0.596	0.748	20.3
+Tunisia	0.596	0.740	19.5
+Colombia	0.595	0.767	23.1
+Dominican Republic	0.595	0.756	21.3
+Indonesia	0.590	0.718	17.8
+Venezuela	0.588	0.711	17.3
+Vietnam	0.588	0.704	16.5
+World	0.587	0.731	18.6
+Philippines	0.587	0.718	18.2
+Turkmenistan	0.586	0.715	18.0
+Tajikistan	0.584	0.668	12.6
+Maldives	0.584	0.740	21.1
+Brazil	0.570	0.765	25.5
+Paraguay	0.557	0.728	23.5
+Guyana	0.556	0.682	18.5
+Belize	0.554	0.716	22.6
+Bolivia	0.546	0.718	24.0
+Gabon	0.544	0.703	22.6
+Iraq	0.541	0.674	19.7
+Suriname	0.535	0.738	27.5
+El Salvador	0.529	0.673	21.4
+São Tomé and Príncipe	0.520	0.625	16.8
+Kiribati	0.516	0.630	18.1
+Nicaragua	0.505	0.660	23.5
+Egypt	0.497	0.707	29.7
+Guatemala	0.481	0.663	27.5
+Bangladesh	0.478	0.632	24.4
+Bhutan	0.476	0.654	27.2
+India	0.475	0.645	26.4
+Cambodia	0.475	0.594	20.0
+Honduras	0.472	0.634	25.6
+South Africa	0.468	0.709	34.0
+Laos	0.461	0.613	24.8
+Nepal	0.446	0.602	25.9
+Kenya	0.443	0.601	26.3
+Zimbabwe	0.441	0.571	22.8
+Ghana	0.440	0.611	28.0
+Timor-Leste	0.436	0.606	28.1
+Eswatini	0.432	0.611	29.3
+Rep. of the Congo	0.430	0.574	25.1
+Namibia	0.418	0.646	35.3
+Zambia	0.401	0.584	31.3
+Uganda	0.399	0.544	26.7
+Tanzania	0.397	0.528	25.0
+Angola	0.397	0.581	31.7
+Madagascar	0.390	0.528	26.1
+Papua New Guinea	0.390	0.555	29.7
+Rwanda	0.387	0.543	28.7
+Pakistan	0.384	0.550	31.1
+Lesotho	0.382	0.527	27.5
+Cameroon	0.375	0.563	34.1
+Mauritania	0.371	0.546	32.1
+Togo	0.351	0.515	31.8
+Nigeria	0.348	0.539	35.4
+Senegal	0.348	0.512	32.0
+Ethiopia	0.348	0.485	28.2
+Côte d'Ivoire	0.346	0.538	35.7
+Malawi	0.345	0.483	28.6
+Benin	0.343	0.520	37.1
+Dem. Rep. of the Congo	0.335	0.480	31.0
+Gambia	0.335	0.496	33.5
+Sudan	0.333	0.510	34.7
+Liberia	0.325	0.480	32.3
+Yemen	0.321	0.470	31.7
+Mozambique	0.316	0.456	30.7
+Burkina Faso	0.316	0.452	30.1
+Guinea	0.313	0.477	34.4
+Haiti	0.303	0.510	40.6
+Burundi	0.303	0.433	30.0
+Comoros	0.303	0.554	45.3
+Guinea-Bissau	0.300	0.480	37.5
+Sierra Leone	0.291	0.452	35.6
+Mali	0.289	0.434	33.4
+Niger	0.284	0.394	27.9
+South Sudan	0.276	0.433	36.3
+Chad	0.248	0.398	37.7
+Central African Republic	0.232	0.397	41.6
