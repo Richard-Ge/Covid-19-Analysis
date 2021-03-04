@@ -149,7 +149,6 @@ ov.total.deaths = sum(recent.data$Cumulative_deaths)
 ov.total.mortality = ov.total.deaths/ov.total.cases
 ov.mean.cases = sum(newcovid$prcCNew)/422
 ov.median.cases = median(newcovid$prcCNew)
-## TODO: look at all the NA elements in recent_data, replace the country names in pop.data with the new names in recent.data
 # View(recent.data); View(pop.data); View(covid21)
 UScovid = filter(newcovid, Country_code=="US")
 ```
@@ -159,9 +158,11 @@ UScovid = filter(newcovid, Country_code=="US")
       b. State assumptions for your model. 
       c. Explain why your model is appropriate for this task. 
 
+One of the models we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
+There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation, while the index $p$ denotes the $p$'th predictor ($p=0$ denotes the intercept of the model).
+
 ```{r}
 # creating dataset for "europe pre-existing markers" model:
-#### TODO: scale() outcome variables before creating models!
 
 EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
 nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
@@ -175,18 +176,56 @@ groups = as.data.table(europecovid)
     # get highest days of new/total cases and new/total deaths
 europe.highest.CNew = groups[groups[, .I[prcCNew==max(prcCNew)], by=Country]$V1]
 dim(europe.highest.CNew);length(unique(europe.highest.CNew$prcCNew)) # no repeats
+europe.highest.CNew = europe.highest.CNew %>% mutate(  #orig. HC, med.wealth only
+  HCSpentPerCap = scale(HCSpentPerCap), 
+  med.wealth=scale(med.wealth), 
+  ElderlyPrc=scale(ElderlyPrc),
+  ObesityPrc=scale(ObesityPrc),
+  AQI=scale(AQI),
+  km.density=scale(km.density),
+  prcCNew=scale(prcCNew),
+  )
 
 europe.highest.CTotal = groups[groups[, .I[prcCTotal==max(prcCTotal)], by=Country]$V1]
 dim(europe.highest.CTotal);length(unique(europe.highest.CTotal$prcCTotal)) # a few repeats!
 europe.highest.CTotal=europe.highest.CTotal[!duplicated(europe.highest.CTotal$prcCTotal), ]  # from stackoverflow
+europe.highest.CTotal = europe.highest.CTotal %>% mutate(  #orig. HC, med.wealth only
+  HCSpentPerCap = scale(HCSpentPerCap), 
+  med.wealth=scale(med.wealth), 
+  ElderlyPrc=scale(ElderlyPrc),
+  ObesityPrc=scale(ObesityPrc),
+  AQI=scale(AQI),
+  km.density=scale(km.density),
+  prcCTotal=scale(prcCTotal),
+  )
 
 europe.highest.DNew = groups[groups[, .I[prcDNew==max(prcDNew)], by=Country]$V1]
 dim(europe.highest.DNew);length(unique(europe.highest.DNew$prcDNew)) # a few repeats!
 europe.highest.DNew=europe.highest.DNew[!duplicated(europe.highest.DNew$prcDNew), ]
+europe.highest.DNew = europe.highest.DNew %>% mutate( 
+  HCSpentPerCap = scale(HCSpentPerCap), 
+  med.wealth=scale(med.wealth), 
+  ElderlyPrc=scale(ElderlyPrc),
+  ObesityPrc=scale(ObesityPrc),
+  AQI=scale(AQI),
+  km.density=scale(km.density),
+  prcDNew=scale(prcDNew),
+  )
 
 europe.highest.DTotal = groups[groups[, .I[prcDTotal==unique(max(prcDTotal))], by=Country]$V1]
 dim(europe.highest.DTotal);length(unique(europe.highest.DTotal$prcDTotal)) # many repeats!
 europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$prcDTotal), ]
+europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth only
+  HCSpentPerCap = scale(HCSpentPerCap), 
+  med.wealth=scale(med.wealth), 
+  ElderlyPrc=scale(ElderlyPrc),
+  ObesityPrc=scale(ObesityPrc),
+  AQI=scale(AQI),
+  km.density=scale(km.density),
+  prcDTotal=scale(prcDTotal),
+  )
+
+plot(europe.highest.DTotal$km.density)
 
 
 # View(filter(europecovid, Country=="Finland"))     View(europe.highest)
@@ -214,16 +253,23 @@ europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$pr
 ```{r}
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 
-preCOVIDtoCTotal = lm(prcCTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.CTotal); summary(preCOVIDtoCTotal); anova(preCOVIDtoCTotal)
+#preCOVIDtoCNew = lm(prcCNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.CNew); summary(preCOVIDtoCNew); anova(preCOVIDtoCNew)
+#preCOVIDtoCTotal = lm(prcCTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.CTotal); summary(preCOVIDtoCTotal); anova(preCOVIDtoCTotal)
+#preCOVIDtoDNew = lm(prcDNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.DNew); summary(preCOVIDtoDNew); anova(preCOVIDtoDNew)
 
 preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
 
+# try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in
+withoutmaltaEtc = europe.highest.DTotal[-c(27)]  # removed malta, maybe also netherlands(29)/belgium(7) as outliers?
+DTotalnoMaltaEtc = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=withoutmaltaEtc); summary(DTotalnoMaltaEtc); anova(DTotalnoMaltaEtc)
 
 plot(europe.highest.DTotal$ObesityPrc, europe.highest.DTotal$prcDTotal)
 plot(europe.highest.DTotal$ElderlyPrc, europe.highest.DTotal$prcDTotal)
 plot(europe.highest.DTotal$HCSpentPerCap, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DNew$AQI, europe.highest.DNew$prcDNew)
-plot(europe.highest.DNew$km.density, europe.highest.DNew$prcDNew)
+plot(europe.highest.DTotal$AQI, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$km.density, europe.highest.DTotal$prcDTotal)
+plot(withoutmaltaEtc$km.density, withoutmaltaEtc$prcDTotal)
+plot(europe.highest.DTotal$med.wealth, europe.highest.DTotal$prcDTotal)
 
 # lm for everything (dont use this!)
 #totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
