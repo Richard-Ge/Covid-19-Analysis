@@ -1,0 +1,375 @@
+---
+title: "Project 2 Description"
+date: "`r Sys.Date()`"
+output: html_document
+---
+<!--
+To update Github with your own code: 
+1. PULL
+From the Git tab, “Pull” the repository. This makes sure your local repository is synced with the remote repository. This is very important if other people are making changes to the repository or if you are working from multiple computers. 
+2. STAGE
+Select (aka. stage) the files you want to commit. In RStudio, this involves checking the “Staged” boxes in the Git tab. 
+3. COMMIT
+Try to add a note so everyone will know what you're changing. 
+4. PUSH
+Saves these local changes to the online repository.
+-->
+## Overview
+
+This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website.
+
+# Background
+
+
+
+## WHO COVID-19 data
+
+We will do an EDA for the WHO COVID-19 data. You can take a look at the [weekly WHO COVID-19 update](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/situation-reports) for reference.
+
+
+```{r echo=TRUE, eval=TRUE}
+# library(tidyverse)
+# covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
+```
+
+This data set is maintained by WHO and updated constantly. The first task for you is to understand this data set, e.g., the meaning of the variables and their values. To this end, you can make use of your preferred search engine, or read the documentation for this data set. 
+
+In this project, you are a team of conscientious statisticians, who wish to help the general public understand the ongoing pandemic. 
+
+
+
+## Suggested outline 
+
+The following list provides one potential structure of the data analysis report. As this is the final project, the following suggestions are intended to provide one viable route for your project while leaving you as much freedom as possible. 
+
+***
+
+0. Before writing your analysis report, you may want to explore this data set and read about the coronavirus to generate the hypothesis or question to be answered in this report, i.e., the question(s) of interest. You can be creative on this question so long as it meets three conditions.
+
+    a. This question might be meaningful in real-world. 
+    b. A method discussed in this course is employed in solving this question. 
+    c. This question does not ask for causality.  
+
+
+
+***
+
+
+1. Introduce the dataset and the questions of interest. 
+
+2. Review the background of the coronavirus. 
+
+3. Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
+<!-- RAHUL AND I START WITH THIS ONE -->
+```{r}
+# install.packages("usethis")
+library(usethis)
+    use_git_config(user.name = "rahuluppuluri", user.email = "rtuppuluri@ucdavis.edu")
+library(tidyverse)
+    covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
+library(lubridate)
+# install.packages("rvest")
+library(rvest)
+library(data.table)
+```
+
+```{r}
+head(covid) # View(covid)
+covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
+
+pop.data = read.csv("~/Documents/STA141A-pop-data.csv", row.names=1)  # View(pop.data)
+obesity = read_tsv("~/Documents/obesity.tsv")
+    obesity = obesity %>% transmute(Country=obesity$Country,ObesityPrc=obesity$Obesity_rate) %>% data.frame()
+elderly = read_tsv("~/Documents/elderly2017WB.tsv")
+    elderly = elderly %>% transmute(Country=elderly$Country,ElderlyPrc=elderly$`c-65+`) %>% data.frame()
+healthcare = read_tsv("~/Documents/healthcare.tsv")
+    healthcare = healthcare %>% transmute(Country=healthcare$Country,HCSpentPerCap=healthcare$pc2018) %>% data.frame()
+# renaming
+pop.data[85, 1] = "Dominican Republic"
+pop.data[188, 1] = "American Samoa"
+pop.data[16, 1] = "Democratic Republic of the Congo"
+pop.data[19, 1] = "Iran (Islamic Republic of)"
+pop.data[21, 1] = "The United Kingdom"
+pop.data[50, 1] = "Venezuela (Bolivarian Republic of)"
+pop.data[81, 1] = "Bolivia (Plurinational State of)"
+pop.data[86, 1] = "Czechia"
+pop.data = rbind(pop.data, Country = c("Andorra", as.numeric(77543)))
+pop.data = rbind(pop.data, Country = c("Latvia", as.numeric(1907675)))
+# pop.data = rbind(pop.data, Country = c("Liechtenstein", as.numeric(38250)))
+pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
+# pop.data = rbind(pop.data, Country = c("Monaco", as.numeric(38300)))
+pop.data = rbind(pop.data, Country = c("Moldova", as.numeric(2640438)))
+pop.data = rbind(pop.data, Country = c("Russia", as.numeric(146238185)))
+pop.data = mutate(pop.data, Population = as.numeric(Population))  # ^^^ gets inputted as char for some reason
+obesity[46, 1] = "Czechia"
+obesity[36, 1] = "The United Kingdom"
+obesity = mutate(obesity, ObesityPrc = as.numeric(ObesityPrc))
+elderly = rbind(elderly, Country = c("Andorra", as.numeric(17.4)))
+elderly[46, 1] = "Czechia"
+elderly[182, 1] = "The United Kingdom"
+elderly = mutate(elderly, ElderlyPrc = as.numeric(ElderlyPrc))
+# for the healthcare data, i realized that i could just edit the tsv itself...no need for all those reassignments...
+
+newcovid = left_join(covid, pop.data, by = c("Country"))
+newcovid = left_join(newcovid, obesity, by = c("Country"))
+newcovid = left_join(newcovid, elderly, by = c("Country"))
+newcovid = left_join(newcovid, healthcare, by = c("Country"))
+    # put new populations here, by name
+# View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
+newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
+worldpop = sum(unique(newcovid$Population), na.rm = T)     # having NA values makes output NA too
+newcovid = mutate(newcovid, 
+                  prcCNew=New_cases*100/Population,             # new cases/its pop -> %
+                  prcCTotal=Cumulative_cases*100/Population,    # total cases/its pop -> %
+                  prcDNew=New_deaths*100/Population,            # new deaths/its pop -> %
+                  prcDTotal=Cumulative_deaths*100/Population,)  # total deaths/its pop -> %
+# View(newcovid)
+## TODO: mutate missing/different names! get summary statistics e.g. total deaths (+ per region), percent of country infected,
+
+covid20 = newcovid %>% filter(Date_reported < "2021-01-01")  # View(covid20)
+covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
+
+
+# Summary Statistics: include at least time, number of cases, number of death, case-mortality rate.
+time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
+recent.data = filter(covid21, Date_reported == Sys.Date()-1)  # or today()
+ov.total.cases = sum(recent.data$Cumulative_cases)
+ov.total.deaths = sum(recent.data$Cumulative_deaths)
+ov.total.mortality = ov.total.deaths/ov.total.cases
+ov.mean.cases = sum(newcovid$prcCNew)/422
+ov.median.cases = median(newcovid$prcCNew)
+## TODO: look at all the NA elements in recent_data, replace the country names in pop.data with the new names in recent.data
+# View(recent.data); View(pop.data); View(covid21)
+UScovid = filter(newcovid, Country_code=="US")
+```
+
+4.  Propose an appropriate model to answer the questions of interest. 
+      a. Explain your notations. 
+      b. State assumptions for your model. 
+      c. Explain why your model is appropriate for this task. 
+
+```{r}
+# creating dataset for "EU pre-existing markers" model:
+
+EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
+nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
+europecovid = filter(newcovid, newcovid$Country %in% c(EUcountries, nonEUcountries))
+  sort(c(EUcountries, nonEUcountries)); sort(unique(europecovid$Country))
+europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recent.europe)
+# mutate(europecovid, Population = )
+
+groups = as.data.table(europecovid)
+# get highest days of new/total cases and new/total deaths
+#europe.highest.CNew = groups[groups[, .I[prcCNew == max(prcCNew)], by=Country]$V1]
+#europe.highest.CTotal = groups[groups[, .I[prcCTotal == max(prcCTotal)], by=Country]$V1]
+#europe.highest.DNew = groups[groups[, .I[prcDNew == max(prcDNew)], by=Country]$V1]
+europe.highest.DTotal = groups[groups[, .I[prcDTotal == unique(max(prcDTotal))], by=Country]$V1]
+dim(europe.highest.DTotal); length(unique(europe.highest.DTotal$prcDTotal)) # many repeats!
+europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$prcDTotal), ]  # from stackoverflow
+
+# View(filter(europecovid, Country=="Finland"))     View(europe.highest)
+
+# OLD PLANS: 
+## simple linreg (+ x-var squared?) for the whole time, or for each year/month/week
+  # can we do many models instead of just 1?
+### we might be able to GROUP these months/weeks to satisfy condition B
+### or PCA the countries for dimension reduction! <ASK PROF: what do the PC's even mean?> youtube.com/watch?v=VjsO5bLe4yg
+  # does PCA count as a model? or do we just use it to select the most important variables?
+  # analyze countries/regions separately from each other?
+### data is specifically the # or % of new cases
+  # analyze countries with negative values separately? what do we do?
+## time series model? towardsdatascience.com/the-complete-guide-to-time-series-analysis-and-forecasting-70d476bfe775
+    ## CHANGE THE QUESTION that we want to answer, in order to avoid needing time series analysis! <?>
+
+# We have (2) dimensions of (419+each_day/188+extra_countries) predictors we can analyze: date, country
+# We have (1) dimension of (4) outcomes we can analyze: % new/total cases/deaths
+# I'm thinking, if we do PCA, we can have "countries" as PCs and "% new cases" as the data, kind of like how we did PCA for babynames. Either way, can we only decrease one dimension of variables (e.g. which countries/dates contribute most)? Or can we PCA two dimensions of variables at once (e.g. which countries AND dates contribute most)? 
+  ## maybe find which days/countries were most severe, and then do further analysis? could this just end up finding the max of each? FIND LOCKDOWN INFO!
+```
+
+5.  Fit the proposed model in (4) and explain your results. 
+
+```{r}
+#dont use CNew, CTotal, DNew yet because the day-to-day variation is too high, or the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
+
+head(europe.highest.DTotal,20)
+europe.highest.DTotal %>% filter(Country == "Albania") %>% print
+unique(europe.highest.DTotal$Date_reported)
+nrow(europe.highest.DTotal)
+unique(europe.highest.DTotal$Country)
+str(europe.highest.DTotal)
+
+
+preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
+
+
+plot(europe.highest.DTotal$ObesityPrc, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$ElderlyPrc, europe.highest.DTotal$prcDTotal)
+plot(europe.highest.DTotal$HCSpentPerCap, europe.highest.DTotal$prcDTotal)
+
+# lm for everything (dont use this!)
+#totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
+#plot(newcovid$Date_reported, newcovid$prcCNew)
+#ggplot(data=newcovid %>% group_by(newcovid$Country)) + 
+#  geom_point(mapping=aes(x=Date_reported, y=prcCNew)) +  # , alpha = 0.01 
+#  geom_abline(intercept = -6.669e-01, slope = 3.639e-05, color="red")
+
+# lm for this year (dont use this!)
+#LM21 = lm(prcCNew~Date_reported, data=covid21); summary(LM21)
+#ggplot(data=covid21 %>% group_by(covid21$Country)) + 
+#  geom_point(mapping=aes(x=Date_reported, y=prcCNew, alpha=0.01)) + 
+#  geom_abline(intercept = 1.162e+00, slope = -6.168e-05, color="red")
+
+# moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
+# https://financetrain.com/estimating-moving-average-ma-model-in-r/
+#US_MA = arima(x=UScovid$prcCNew)  #another var?
+#US_MA; summary(US_MA)
+#ts.plot(UScovid$prcCNew)
+#resids = US_MA$residuals
+#ts.plot(resids)
+```
+
+
+
+
+
+
+
+
+3. Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
+```{r}
+face.coverings <- read_csv("~/Documents/face-covering-policies-covid.csv")
+stay.at.home <- read_csv("~/Documents/stay-at-home-covid.csv")
+public.events <- read_csv("~/Documents/public-events-covid.csv")
+
+colnames(face.coverings)[1] <- "Country"
+colnames(stay.at.home)[1] <- "Country"
+colnames(public.events)[1] <- "Country"
+
+colnames(face.coverings)[3] <- "Date_reported"
+colnames(stay.at.home)[3] <- "Date_reported"
+colnames(public.events)[3] <- "Date_reported"
+
+var = "Switzerland"
+covid <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+stay.at.home <- filter(stay.at.home, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+public.events <- filter(public.events, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+
+policy.data <- inner_join(covid,face.coverings, by=c("Date_reported","Country"))
+#policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
+#policy.data <- inner_join(policy.data, public.events, by=c("Date_reported","Country"))
+
+drops <- c("Code.x", "Code.y", "Code", "Country_code")
+policy.data[ , !(names(policy.data) %in% drops)]
+head(policy.data)
+
+#Have to convert each of the categories to labels i.e. 1 (restricted), 2 (mandated) using as.factor so that when we do anova, we can see which levels are actually impacting the number of new cases
+
+policy.data$facial_coverings = factor(policy.data$facial_coverings)
+levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required = "4")
+is.factor(policy.data$facial_coverings)
+head(policy.data)
+unique(policy.data$facial_coverings)
+
+
+
+#2 countries from Western Europe vs 2 countries from Eastern Europe?
+#1 model from before Holiday season (March-October) and 1 model after (December-?)
+```
+
+##### Univariate Analysis
+```{r}
+summary(policy.data) #No NaNs in dataset, so no need to drop anything
+
+
+ggplot(data=policy.data, aes(x=Date_reported, y=New_cases)) +
+  geom_line(alpha=0.9) +
+  ggtitle("Time vs New Cases")
+       
+
+ggplot(data=policy.data, mapping=aes(x=facial_coverings, y=New_cases)) +
+  geom_boxplot() +
+  xlab("Facial Coverings vs New Cases")
+
+```
+
+
+##### Multivariate Analysis
+
+
+
+5. Model #2
+```{r}
+
+#COVID.policy.cases.lm = lm(New_cases~facial_coverings+stay_home_requirements+cancel_public_events, data=policy.data)
+#summary(COVID.policy.cases.lm)
+
+head(policy.data)
+
+COVID.policy.cases.aov = aov(New_cases~facial_coverings,data=policy.data)
+summary(COVID.policy.cases.aov)
+
+#H0:α1=α2=α3=0, meaning there is no difference among categories
+
+
+TukeyHSD(COVID.policy.cases.aov, "facial_coverings")
+plot(TukeyHSD(COVID.policy.cases.aov, "facial_coverings"))
+
+
+
+
+#Focus on date a little more? Pre vs post Holidays
+```
+
+
+
+6.  Conduct model diagnostics and/or sensitivity analysis. 
+
+##### Residuals Vs Fitted
+
+
+```{r}
+plot(COVID.policy.cases.aov,which=1)
+```
+
+
+##### Normal Q-Q
+
+
+```{r}
+plot(COVID.policy.cases.aov, which=2)
+```
+
+
+
+##### Scale-Location
+
+
+```{r}
+plot(COVID.policy.cases.aov, which=3)
+```
+
+
+
+##### Residuals vs Leverage
+
+
+```{r}
+plot(COVID.policy.cases.aov,which=5)
+```
+
+
+
+
+
+
+
+
+7. Conclude your analysis with a discussion of your findings and caveats of your approach. 
+
+```{r}
+
+```
+
+
