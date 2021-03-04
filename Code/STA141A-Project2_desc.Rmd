@@ -90,6 +90,8 @@ pop_dens = read_tsv("~/Documents/pop_dens.tsv")
     pop_dens = pop_dens %>% transmute(Country=pop_dens$Country,km.density=pop_dens$km_PopDens) %>% data.frame()
 incomes = read_tsv("~/Documents/incomes.tsv")
     incomes = incomes %>% transmute(Country=incomes$Country,med.wealth=incomes$MedWealth) %>% data.frame()
+HDIs = read_tsv("~/Documents/countryHDIs.tsv")
+    HDIs = HDIs %>% transmute(Country=HDIs$Country,HDIadj=HDIs$HDI.ineq) %>% data.frame()
 
 # renaming
 pop.data[85, 1] = "Dominican Republic"
@@ -124,18 +126,20 @@ newcovid = left_join(newcovid, healthcare, by = c("Country"))
 newcovid = left_join(newcovid, aqis, by = c("Country"))
 newcovid = left_join(newcovid, pop_dens, by = c("Country"))
 newcovid = left_join(newcovid, incomes, by = c("Country"))
+newcovid = left_join(newcovid, HDIs, by = c("Country"))
 
     # put new populations here, by name
 # View(newcovid); View(pop.data)   # got confused: saw the same pop. many times
 newcovid = filter(newcovid, !is.na(newcovid$Population))  # REMOVE NA pop. countries
 worldpop = sum(unique(newcovid$Population), na.rm = T)     # having NA values makes output NA too
 newcovid = mutate(newcovid, 
-                  prcCNew=New_cases*100/Population,             # new cases/its pop -> %
-                  prcCTotal=Cumulative_cases*100/Population,    # total cases/its pop -> %
-                  prcDNew=New_deaths*100/Population,            # new deaths/its pop -> %
-                  prcDTotal=Cumulative_deaths*100/Population,)  # total deaths/its pop -> %
+                  prcCNew=New_cases*100/Population,       # new cases/pop -> %
+                  prcCTotal=Cumulative_cases*100/Population, # total cases/pop -> %
+                  prcDNew=New_deaths*100/Population,   # new deaths/pop -> %
+                  prcDTotal=Cumulative_deaths*100/Population, # total deaths/pop -> %
+                  mortality.now=Cumulative_deaths/Cumulative_cases)  
 # View(newcovid)
-## TODO: mutate missing/different names! get summary statistics e.g. total deaths (+ per region), percent of country infected,
+## TODO: get summary statistics e.g. total deaths (+ per region), percent of country infected,
 
 covid20 = newcovid %>% filter(Date_reported < "2021-01-01")  # View(covid20)
 covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
@@ -158,8 +162,11 @@ UScovid = filter(newcovid, Country_code=="US")
       b. State assumptions for your model. 
       c. Explain why your model is appropriate for this task. 
 
-One of the models we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
+One model we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
+
 There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation, while the index $p$ denotes the $p$'th predictor ($p=0$ denotes the intercept of the model).
+
+The second model we will use is the analysis of variance model, which is defined as follows: $$$$
 
 ```{r}
 # creating dataset for "europe pre-existing markers" model:
@@ -225,7 +232,7 @@ europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth
   prcDTotal=scale(prcDTotal),
   )
 
-plot(europe.highest.DTotal$km.density)
+# plot(europe.highest.DTotal$km.density)  ## big outlier: malta
 
 
 # View(filter(europecovid, Country=="Finland"))     View(europe.highest)
@@ -252,24 +259,29 @@ plot(europe.highest.DTotal$km.density)
 
 ```{r}
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
+#### We will use mortality rate as the outcome variable because it doesn't just go up all the time, instead staying at a specific rate that can only go up or down very slightly. TODO: add "change in mortality" as a variable?
 
-#preCOVIDtoCNew = lm(prcCNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.CNew); summary(preCOVIDtoCNew); anova(preCOVIDtoCNew)
-#preCOVIDtoCTotal = lm(prcCTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.CTotal); summary(preCOVIDtoCTotal); anova(preCOVIDtoCTotal)
-#preCOVIDtoDNew = lm(prcDNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.DNew); summary(preCOVIDtoDNew); anova(preCOVIDtoDNew)
+#preCOVIDtoCNew = lm(prcCNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.CNew); summary(preCOVIDtoCNew); anova(preCOVIDtoCNew)
+#preCOVIDtoCTotal = lm(prcCTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.CTotal); summary(preCOVIDtoCTotal); anova(preCOVIDtoCTotal)
+#preCOVIDtoDNew = lm(prcDNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.DNew); summary(preCOVIDtoDNew); anova(preCOVIDtoDNew)
 
-preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
+#preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
 
-# try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in
-withoutmaltaEtc = europe.highest.DTotal[-c(27)]  # removed malta, maybe also netherlands(29)/belgium(7) as outliers?
-DTotalnoMaltaEtc = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=withoutmaltaEtc); summary(DTotalnoMaltaEtc); anova(DTotalnoMaltaEtc)
+preCOVIDtoMort = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.recent); summary(preCOVIDtoMort); anova(preCOVIDtoMort)  #
 
-plot(europe.highest.DTotal$ObesityPrc, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DTotal$ElderlyPrc, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DTotal$HCSpentPerCap, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DTotal$AQI, europe.highest.DTotal$prcDTotal)
-plot(europe.highest.DTotal$km.density, europe.highest.DTotal$prcDTotal)
-plot(withoutmaltaEtc$km.density, withoutmaltaEtc$prcDTotal)
-plot(europe.highest.DTotal$med.wealth, europe.highest.DTotal$prcDTotal)
+# try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in. redo models with mortality rate?
+withoutmaltaEtc = europe.recent[-c(28, 40),]  # removed malta, maybe also netherlands/belgium for density, switzerland for income, as outliers?
+mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=withoutmaltaEtc); summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
+
+plot(europe.recent$ObesityPrc, europe.recent$mortality.now)
+plot(europe.recent$ElderlyPrc, europe.recent$mortality.now)
+plot(europe.recent$HCSpentPerCap, europe.recent$mortality.now)
+plot(europe.recent$AQI, europe.recent$mortality.now)
+plot(europe.recent$km.density, europe.recent$mortality.now)
+plot(withoutmaltaEtc$km.density, withoutmaltaEtc$mortality.now)
+plot(europe.recent$med.wealth, europe.recent$mortality.now)
+plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now)
+plot(europe.recent$HDIadj, europe.recent$mortality.now)
 
 # lm for everything (dont use this!)
 #totalLM = lm(prcCNew~Date_reported, data=newcovid); summary(totalLM)
