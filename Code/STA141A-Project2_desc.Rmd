@@ -30,6 +30,7 @@ We will do an EDA for the WHO COVID-19 data. You can take a look at the [weekly 
 
 
 ```{r echo=TRUE, eval=TRUE}
+sessionInfo()
 # library(tidyverse)
 # covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
 ```
@@ -656,8 +657,84 @@ Another caveat of our approach is that Italy's elderly population has, for a lon
 
 Based on the analysis above, we can conclude that requiring facial coverings outside at all times has the greatest impact on reducing the number of new cases compared to other tiers, while stay-at-home restrictions did not seem to impact the number of new cases as much, which is contradictory to common belief. However, a major caveat includes the fact that there exists multicollinearity between the variables for the two individual policies, so independent analysis of both variables is required to properly analyze the model and interpret its results. Another alternative would be to choose another policy entirely in order to avoid interaction between the predictor variables. For example, future research can be conducted using facial coverings and testing policies instead, as they are more independent from each other than the currently chosen policies. A second caveat is that the two-way ANOVA model for these policies was only fit to the number of new cases in France. Future research can be conducted by aggregating multiple countries that are similar to one another in terms of how they implement these policies, and performing a two-way ANOVA model with the aggregated countries and a single policy as the predictor variables. A third caveat to our approach is that the timeframe for our analysis is limited to a six month period. Due to the major holiday season, many countries experienced spikes in cases, and therefore made changes to their existing policies by either enforcing them more strictly (i.e. enforcing lockdowns) or relaxing them (i.e. ending curfews). We limited our data analysis to the months before the holiday season to avoid any variance in the fluctuating number of cases and extreme policy changes that took place after October.
 
+## Appendix: Code, Citations
+
+### Code
+
 ```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 
 ```
 
-<!--text(dist ~speed, labels=speed,data=cars, cex=0.9, font=2)-->
+### Citations (data, then code)
+
+##### Data: 
+
+Andorra Demographics Profile, www.indexmundi.com/andorra/demographics_profile.html. 
+
+Anonymous. “Country Health Profiles.” Public Health - European Commission, 7 Feb. 2020, ec.europa.eu/health/state/country_profiles_en. 
+
+Authors Jonathan Lehne Assistant Professor | SITE, et al. “Pollution and the COVID-19 Pandemic: Air Quality in Eastern Europe • FREE NETWORK.” FREE NETWORK, 1 Feb. 2021, freepolicybriefs.org/2021/02/01/air-quality-eastern-europe/#:~:text=Figure%201%2C%20which%20plots%20these,to%20their%20Western%20European%20counterparts. 
+
+Culbertson, Alix. “COVID-19: What Are the Christmas Coronavirus Rules in Other European Countries?” Sky News, Sky, 19 Dec. 2020, news.sky.com/story/covid-19-what-are-europes-christmas-coronavirus-rules-12162445. 
+
+“Coronavirus Disease 2019.” Wikipedia, Wikimedia Foundation, 5 Mar. 2021, en.wikipedia.org/wiki/Coronavirus_disease_2019. 
+
+“Countries Ordered by Population in 2019.” PopulationPyramid.net, www.populationpyramid.net/population-size-per-country/2019/. 
+
+“Countries With the Oldest Populations in the World.” Population Reference Bureau, 16 Mar. 2019, www.prb.org/countries-with-the-oldest-populations/. 
+
+“EU Countries - The Member States of the European Union.” SchengenVisaInfo.com, 24 Nov. 2020, www.schengenvisainfo.com/eu-countries/.
+
+“FACTOR VARIABLES | R LEARNING MODULES.” IDRE Stats, University of California, Los Angeles, stats.idre.ucla.edu/r/modules/factor-variables/. 
+
+“CODING FOR CATEGORICAL VARIABLES IN REGRESSION MODELS | R LEARNING MODULES.” IDRE Stats, University of California, Los Angeles, https://stats.idre.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/.
+
+“Fine Particulate Matter and COVID-19 Mortality in the United States.” Home, projects.iq.harvard.edu/covid-pm. 
+
+“Is Air Quality in China a Social Problem?” ChinaPower Project, 26 Feb. 2021, chinapower.csis.org/air-quality/.
+“List of Countries and Dependencies by Population Density.” Wikipedia, Wikimedia Foundation, 27 Feb. 2021, en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population_density#cite_ref-9. 
+“List of Countries by Age Structure.” Wikipedia, Wikimedia Foundation, 15 Feb. 2021, en.wikipedia.org/wiki/List_of_countries_by_age_structure. 
+
+“List of Countries by Life Expectancy.” Wikipedia, Wikimedia Foundation, 24 Feb. 2020, en.wikipedia.org/w/index.php?title=List_of_countries_by_life_expectancy&oldid=942400940#List_by_the_World_Health_Organization_(2015). 
+
+“List of Countries by Inequality-Adjusted HDI.” Wikipedia, Wikimedia Foundation, 1 Mar. 2021, en.wikipedia.org/wiki/List_of_countries_by_inequality-adjusted_HDI. 
+
+“List of Countries by Total Health Expenditure per Capita.” Wikipedia, Wikimedia Foundation, 6 Feb. 2021, en.wikipedia.org/wiki/List_of_countries_by_total_health_expenditure_per_capita#World_Health_Organization. 
+
+“List of Countries by Wealth per Adult.” Wikipedia, Wikimedia Foundation, 3 Feb. 2021, en.wikipedia.org/wiki/List_of_countries_by_wealth_per_adult#By_country. 
+
+“Member State of the European Union.” Wikipedia, Wikimedia Foundation, 5 Mar. 2021, en.wikipedia.org/wiki/Member_state_of_the_European_Union#List. 
+
+Ouyang, Xiao, et al. “Environmental Regulation, Economic Growth and Air Pollution: Panel Threshold Analysis for OECD Countries.” Science of The Total Environment, Elsevier, 5 Dec. 2018, www.sciencedirect.com/science/article/pii/S0048969718348964. 
+
+“Population Ages 65 and above (% of Total Population).” Data, data.worldbank.org/indicator/SP.POP.65UP.TO.ZS?name_desc=false&view=chart. 
+
+Ritchie, Research and data: Hannah. “COVID-19: Cancellation of Public Events and Gatherings.” Our World in Data, ourworldindata.org/covid-cancel-public-events. 
+
+Ritchie, Research and data: Hannah. “COVID-19: Face Coverings.” Our World in Data, ourworldindata.org/covid-face-coverings. 
+
+Ritchie, Research and data: Hannah. “COVID-19: Stay-at-Home Restrictions.” Our World in Data, ourworldindata.org/covid-stay-home-restrictions. 
+
+Spiteri, Gianfranco, et al. “First Cases of Coronavirus Disease 2019 (COVID-19) in the WHO European Region, 24 January to 21 February 2020.” Eurosurveillance, European Centre for Disease Prevention and Control, 5 Mar. 2020, www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.9.2000178. 
+
+Tandon, Ajay, et al. “MEASURING OVERALL HEALTH SYSTEM PERFORMANCE FOR 191 COUNTRIES.” World Health Organization, World Health Organization, www.who.int/healthinfo/paper30.pdf.
+
+“Two-Way ANOVA in SPSS Statistics.” Two-Way ANOVA in SPSS Statistics - Step-by-Step Procedure Including Testing of Assumptions | Laerd Statistics, statistics.laerd.com/spss-tutorials/two-way-anova-using-spss-statistics.php. 
+
+***
+
+##### Code: 
+
+grouping one variable by highest of another variable - https://stackoverflow.com/questions/24558328/how-to-select-the-row-with-the-maximum-value-in-each-group
+
+removing rows that are duplicates by one variable - https://www.datanovia.com/en/lessons/identify-and-remove-duplicate-data-in-r/
+
+concatenate/print strings - https://www.math.ucla.edu/~anderson/rw1001/library/base/html/cat.html
+
+add text to plots - https://rpubs.com/RatherBit/188960
+
+hiding unnecessary method outputs - https://stackoverflow.com/questions/52433164/how-do-i-remove-the-code-on-column-specification-in-r-markdown-while-preserving
+
+StatQuest on youtube for PCA - https://www.youtube.com/watch?v=FgakZw6K1QQ
+
+Drop data frame columns by name - https://stackoverflow.com/questions/4605206/drop-data-frame-columns-by-name
