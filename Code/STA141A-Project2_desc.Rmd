@@ -55,25 +55,31 @@ The following list provides one potential structure of the data analysis report.
 
 ***
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# install.packages("usethis")
+library(usethis, warn.conflicts=F)
+    use_git_config(user.name = "Richard-Ge", user.email = "richardge951@gmail.com")
+library(tidyverse, warn.conflicts=F)
+library(car, warn.conflicts=F)
+    covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
+library(lubridate, warn.conflicts=F)
+# install.packages("rvest")
+library(rvest, warn.conflicts=F)
+library(data.table, warn.conflicts=F) 
+```
 
 1. Introduce the dataset and the questions of interest. 
 
 2. Review the background of the coronavirus. 
 
-3. Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
-<!-- RAHUL AND I START WITH THIS ONE -->
-```{r, echo=FALSE}
-# install.packages("usethis")
-library(usethis)
-    use_git_config(user.name = "Richard-Ge", user.email = "richardge951@gmail.com")
-library(tidyverse)
-library(car)
-    covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
-library(lubridate)
-# install.packages("rvest")
-library(rvest)
-library(data.table)
-```
+3. Summary Statistics
+<!--
+Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
+-->
+
+It has been 425 days since the WHO began collecting data, and 404 days since the first COVID-19 cases appeared in France. There have been a total of 33,240,905 cases and 765,170 deaths in the European countries selected for this analysis, with a mortality rate of 2.30%. The mean of percent changes in case numbers (0.575%) is over 200 times larger than the median (0.00252%), which indicates that the increases in case numbers are strongly skewed right; on some days, the number of cases (adjusted for population) in some countries increases very quickly compared to the other days. 
+
+When accounting for whether our selected countries are in the EU, the EU countries have 22,478,344 cases and 550,689 deaths, while the non-EU countries have 10,675,458 cases and 212,843 deaths. This difference in case numbers is most likely due to the greater number of, and higher population in, EU countries as opposed to the fewer, less-populated European countries in this analysis. 
 
 ```{r, echo=FALSE}
 head(covid) # View(covid)
@@ -217,11 +223,13 @@ eu.stats; summarystats
       b. State assumptions for your model. 
       c. Explain why your model is appropriate for this task. 
 
-One model we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
+One model we will use is the simple linear regression model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
 
-There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuing countries, while the intercept of the model is at $p=0$). 
+There are $p+1$ (when including the intercept $\beta_{0}$) parameters $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuring countries, while the intercept of the model is at $p=0$). 
 
-The proposed predictors for this model are as follows: percent of the population that is obese, percent of the population that is elderly, total health expenditure per capita (in $USD), air quality index (AQI) aggregated per country, population density (per km^2), median wealth in USD (per adult), and inequality-adjusted HDI (the unadjusted HDI is the theoretical development of a country, while the adjusted version accounts for a decrease due to inequality). 
+We will use mortality rate as the outcome variable $Y_i$ because it is most likely to be directly associated with how susceptible a country's population is to the pandemic, as opposed to infection rates/day-to-day statistics (which have greater variation both between and within countries) and simple cumulative statistics (which seem to only increase with time, making the analysis biased towards fewer cases/deaths).  <maybe connect sta131b concepts to this reasoning? Analysis will be biased anyways as more countries get things under control, and the mortality rate shifts>
+
+The proposed predictors for this model are as follows: percent of the population that is obese, percent of the population that is elderly, total health expenditure per capita (in USD), air quality index (AQI) aggregated per country, population density (per km^2), median wealth in USD (per adult), and inequality-adjusted HDI (the unadjusted HDI is the theoretical development of a country, while the adjusted version accounts for a decrease due to inequality). 
 
 The assumptions are as follows: there is a linear relationship between the predictor and outcome variables, the variables are independent from each other, there is no multicollinearity between the variables, and the residuals are linear and normally distributed. 
 
@@ -311,15 +319,19 @@ groups = as.data.table(europecovid)
 
 5.  Fit the proposed model in (4) and explain your results. 
 
+To evaluate whether there is a difference in current mortality rate given the various proposed predictors, we performed an overall F-test as well as individual F-tests. The null hypothesis for this model is $H_0: \beta_{obesity} = \beta_{elderly} = \beta_{HCspent} = \beta_{AQI} = \beta_{density} = \beta_{med.wealth} = \beta_{HDIadj} = 0$, and the alternative hypothesis for this model is $H_a: ≥1 of the parameters is not 0$.
+
 In the process of fitting a model, we found many countries that had missing data or were influential observations that needed to be removed. Malta has a population density of 1634 (which was four times higher than the next most densely populated country), which made further analysis on population density inconclusive. Switzerland has a median wealth of over $220,000 USD, which also lies well beyond other observations - the next-biggest outlier is \$60,000 lower than this observation. In both of these cases, the statistic is well beyond the 1.5\*IQR (or even 2\*IQR) range for outliers, so we were comfortable with removing them from the dataset. 
 
 I used both PCA and pairwise plots to detect collinearity between variables, and avoid violating some linear model assumptions. The variables HCSpentPerCap, HDIadj, and med.wealth were clustered fairly closely together when plotting the PC1 & PC2 values, and therefore accounted for similar variances, so I removed the two less-significant variables and only kept HCSpentPerCap. This is also shown in the pairwise plots, where the three variables have noticeably linear relationships with one another. 
 
-The final fitted model is as follows: $$Y_i = -0.0580 + 0.00094X_{obesity,i} + 0.00195X_{elderly,i} + 0.0000012X_{healthcare,i} + 0.00112X_{AQI,i} + 0.0000110X_{density,i} + \epsilon_{i}$$ where $i$ denotes the $i$'th country observed, and $X_{predictor}$ is the vector of observed values for a specific predictor. 
+The final fitted model is as follows: $$Y_i = -0.0580 + 0.00094X_{obesity,i} + 0.00195X_{elderly,i} + 0.0000012X_{HCspent,i} + 0.00112X_{AQI,i} + 0.0000110X_{density,i} + \epsilon_{i}$$ where $i$ denotes the $i$'th country observed, and $X_{predictor}$ is the vector of observed values for a specific predictor. 
 
 This model says that, an increase of 1 in any of the predictors (given that the others are fixed) will increase the mortality rate by that predictor's coefficient (e.g. an increased elderly population by one percent, with the others remaining the same, is associated with an increased mortality rate by 0.00195).
 
-Higher proportions of elderly people in a population, as well as increases in the air quality index or the amount of money spent on healthcare per capita, are all associated with higher COVID-19 mortality rates at the national level. Elderly populations are at higher risk of dying from COVID-19, as are individuals who have suffered increased lung damage from more airborne particulates than normal. The increased mortality rate among countries with higher healthcare spending per capita may be due to the country's healthcare system being less efficient at allocating resources, or the healthcare system already operating near capacity even before the COVID-19 pandemic, and becoming overwhelmed as more patients and staff require new equipment and medical attention. 
+The overall F-test for this model has an F-statistic of $8.397$, which corresponds to a p-value of $6.83*10^-5$. This is statistically significant at the level $\alpha=0.05$, so we must reject the null hypothesis, which states that all of the parameters are 0; and accept the alternative hypothesis, which states that at least one of the parameters is not 0. 
+
+Partial F-tests show that higher proportions of elderly people in a population, as well as increases in the air quality index and the amount of money spent on healthcare per capita, are all associated with higher national COVID-19 mortality rates at the significance level $\alpha=0.05$. Elderly populations are at higher risk of dying from COVID-19, as are individuals who have suffered increased lung damage from airborne particulates. The increased mortality rate among countries with higher healthcare spending per capita may be due to the country's healthcare system being less efficient at allocating resources, or the healthcare system already operating near capacity even before the COVID-19 pandemic, and becoming overwhelmed as more patients and staff require medical attention and new equipment. 
 
 ```{r, echo=FALSE}
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
@@ -352,7 +364,7 @@ plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now, main="Wealth, w/
 #plot(europe.recent$HDIadj, europe.recent$mortality.now)
 
 ## NEW DATASET
-woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most missing values
+woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most missing values, and this gets rid of some other outlier countries
 ## CHECKING FOR COLLINEARITY
     pairs(cbind(woMaltafiltered$mortality.now,woMaltafiltered$ObesityPrc,woMaltafiltered$ElderlyPrc,woMaltafiltered$HCSpentPerCap,woMaltafiltered$AQI,woMaltafiltered$km.density,woMaltafiltered$med.wealth,woMaltafiltered$HDIadj), labels=c("Mortality", "Obesity", "Elderly", "HC. Spent", "AQI", "Pop. Dens.", "Med. Wealth", "HDI adj."), main="Pairwise Plots, w/o NA values/countries", gap=0.2)
 ## PRINCIPAL COMPONENT ANALYSIS FOR VARIANCE/EIGENVECTORS
@@ -383,14 +395,15 @@ final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
 
-Based on the fitted-to-residuals plot, the residual terms $\epsilon_i$ seem to have mostly constant variance as the x-variables change (with a few exceptions) and appear generally normally distributed according to the QQ-plot. The Shapiro-Wilk test for normality has a p-value that is not statistically significant at the level $\alpha = 0.05$, so it seems reasonable to accept the null hypothesis: the errors are normally distributed. 
+Based on the fitted-to-residuals plot, the residual terms $\epsilon_i$ seem to have mostly constant variance as the x-variables change (with a few exceptions), but there is some slight non-linearity in the residuals as well as some outliers (specifically Hungary, Serbia, and Slovakia). The errors seem to be generally normally distributed according to the QQ-plot. The Shapiro-Wilk test for normality has a p-value of 0.7393, which is not statistically significant at the level $\alpha = 0.05$, so it seems reasonable to accept the null hypothesis: the errors are normally distributed. 
 
-The variance inflation factor has a value of over 5 for HCSpentPerCap, so there is some multicollinearity between the variables. After removing some similar variables (as determined by clusters in the PCA), the VIF is diminished enough to reasonably assume a lack of multicollinearity. 
+The variance inflation factor has a value of 5.613 (≥5) for HCSpentPerCap when all of the variables from the full model are analyzed, so there is some multicollinearity between the variables. After removing some similar variables (as determined by clusters in the PCA), the VIF is diminished enough to reasonably assume a lack of multicollinearity. 
 
 ```{r, echo=FALSE}
-plot(mortnoMaltaEtc, which=1)
-plot(mortnoMaltaEtc, which=2)
-shapiro.test(resid(mortnoMaltaEtc))
+plot(final.mortnoMaltaEtc, which=1)
+plot(final.mortnoMaltaEtc, which=2)
+shapiro.test(resid(final.mortnoMaltaEtc))
+"VIF for original & final models"
 vif(mortnoMaltaEtc)
 vif(final.mortnoMaltaEtc)
 ```
