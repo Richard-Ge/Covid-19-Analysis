@@ -15,11 +15,12 @@ Try to add a note so everyone will know what you're changing.
 4. PUSH
 Saves these local changes to the online repository.
 -->
+<!--
 ## Overview
 
 This document contains instructions on Project 2 for STA 141A in Winter 2021. This document is made with `R markdown`. The `rmd` file to generate this document is available on the course website.
 
-# Background
+## Background
 
 
 
@@ -36,13 +37,14 @@ We will do an EDA for the WHO COVID-19 data. You can take a look at the [weekly 
 This data set is maintained by WHO and updated constantly. The first task for you is to understand this data set, e.g., the meaning of the variables and their values. To this end, you can make use of your preferred search engine, or read the documentation for this data set. 
 
 In this project, you are a team of conscientious statisticians, who wish to help the general public understand the ongoing pandemic. 
+-->
 
-
-
+<!--
 ## Suggested outline 
 
 The following list provides one potential structure of the data analysis report. As this is the final project, the following suggestions are intended to provide one viable route for your project while leaving you as much freedom as possible. 
-
+-->
+<!--
 ***
 
 0. Before writing your analysis report, you may want to explore this data set and read about the coronavirus to generate the hypothesis or question to be answered in this report, i.e., the question(s) of interest. You can be creative on this question so long as it meets three conditions.
@@ -50,12 +52,13 @@ The following list provides one potential structure of the data analysis report.
     a. This question might be meaningful in real-world. 
     b. A method discussed in this course is employed in solving this question. 
     c. This question does not ask for causality.  
-
+-->
 
 
 ***
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#### SETUP
 # install.packages("usethis")
 library(usethis, warn.conflicts=F)
     use_git_config(user.name = "Richard-Ge", user.email = "richardge951@gmail.com")
@@ -68,21 +71,31 @@ library(rvest, warn.conflicts=F)
 library(data.table, warn.conflicts=F) 
 ```
 
-1. Introduce the dataset and the questions of interest. 
+## 1. Dataset, Questions of Interest
+<!--Introduce the dataset and the questions of interest. -->
+The global COVID-19 pandemic has caused a large number of deaths since it was first discovered in 2019. Here, we will be exploring if existing (pre-2020) markers for each country, such as air pollution levels, healthcare quality, and average population age, are associated with a higher death toll, and if policy changes in government are associated with fewer deaths. 
 
-2. Review the background of the coronavirus. 
+We will primarily be using the WHO's global COVID-19 dataset in this report, which includes the date a country (labeled by their country code and also by their region in the world) reported a new case or death, as well as the updated cumulative number of cases and deaths. We will only be exploring specific Eastern European countries compared to specific Western European countries in this report because of their similar yet vastly different environments--similar weather, social healthcare provisions, and government policies vs. differing air pollution levels and population ages. 
 
-3. Summary Statistics
+Our second question of interest is examining how policy updates (mask mandates and stay-at-home restrictions) in those countries affect the number of new cases per capita from March to October. Since the levels of each of these policies may have different meanings in different countries, we will only be exploring one specific European country that displays a strong balance between all of the categories for this analysis (i.e. recommended, required with exceptions, etc.). Additionally, we are focusing on the specific timeframe of March to October to see how policies normalized overtime, as March marked the beginning of the lockdown period in which many policies were enacted in countries, while October is the six-month milestone before the major Holiday season.
+
+## 2. Background
+<!--Review the background of the coronavirus. -->
+The coronavirus disease 2019, also known as COVID-19, is a virus known to cause mild to severe respiratory illness, and originated from an outbreak in Wuhan, China. This highly contagious virus spread throughout the world very quickly, and the CDC declared it a pandemic due to its deadly nature in March. In order to take preventative measures from catching it, many schools and businesses were shut down globally as the world moved to online learning or remote work from home (unless deemed essential by their government), and social guidelines or rules were enacted, which include social distancing, wearing masks, self-isolation, and other hygienic practices. While people waited for more research on how the virus spread and for a vaccine to be developed and distributed, many nations across the world faced high death tolls and rising case numbers.
+
+## 3. Summary Statistics 
 <!--
 Explore this dataset and generate summary statistics that you find informative, and explain your findings. <span style="color:red"> The summary statistics should include at least time, number of cases, number of death, case-mortality rate.</span>
 -->
+
+### Linear Model
 
 It has been 425 days since the WHO began collecting data, and 404 days since the first COVID-19 cases appeared in France. There have been a total of 33,240,905 cases and 765,170 deaths in the European countries selected for this analysis, with a mortality rate of 2.30%. The mean of percent changes in case numbers (0.575%) is over 200 times larger than the median (0.00252%), which indicates that the increases in case numbers are strongly skewed right; on some days, the number of cases (adjusted for population) in some countries increases very quickly compared to the other days. 
 
 When accounting for whether our selected countries are in the EU, the EU countries have 22,478,344 cases and 550,689 deaths, while the non-EU countries have 10,675,458 cases and 212,843 deaths. This difference in case numbers is most likely due to the greater number of, and higher population in, EU countries as opposed to the fewer, less-populated European countries in this analysis. 
 
-```{r, echo=FALSE}
-head(covid) # View(covid)
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# head(covid) # View(covid)
 covid = mutate(covid, WHO_region = fct_recode(WHO_region,"Eastern Mediterranean"="EMRO","Europe" = "EURO","Africa" = "AFRO","Western Pacific" = "WPRO","Americas"="AMRO","South-East Asia" = "SEARO"))
 
 ## ADDING DATASETS
@@ -218,12 +231,23 @@ names(summarystats) = c("Total Cases", "Total Deaths")
 eu.stats; summarystats
 ```
 
-4.  Propose an appropriate model to answer the questions of interest. 
+### ANOVA Model
+
+
+
+## 4. Models
+<!--
+Propose an appropriate model to answer the questions of interest. 
       a. Explain your notations. 
       b. State assumptions for your model. 
       c. Explain why your model is appropriate for this task. 
+-->
+
+### Linear Model
 
 One model we will use is the simple linear regression model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
+
+This model is ideal for analyzing what pre-COVID metrics of a country are associated with the current mortality rate, because all of the variables are continuous. Furthermore, there is only one outcome variable, and many possible predictor variables, which are well-suited to linear dimension reduction methods. 
 
 There are $p+1$ (when including the intercept $\beta_{0}$) parameters $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuring countries, while the intercept of the model is at $p=0$). 
 
@@ -232,10 +256,6 @@ We will use mortality rate as the outcome variable $Y_i$ because it is most like
 The proposed predictors for this model are as follows: percent of the population that is obese, percent of the population that is elderly, total health expenditure per capita (in USD), air quality index (AQI) aggregated per country, population density (per km^2), median wealth in USD (per adult), and inequality-adjusted HDI (the unadjusted HDI is the theoretical development of a country, while the adjusted version accounts for a decrease due to inequality). 
 
 The assumptions are as follows: there is a linear relationship between the predictor and outcome variables, the variables are independent from each other, there is no multicollinearity between the variables, and the residuals are linear and normally distributed. 
-
-This model is ideal for analyzing what pre-COVID metrics of a country are associated with the current mortality rate, because all of the variables are continuous. Furthermore, there is only one outcome variable, and many possible predictor variables, which are well-suited to linear dimension reduction methods. 
-
-The second model we will use is the analysis of variance model, which is defined as follows: $$$$
 
 ```{r, echo=FALSE}
 
@@ -317,9 +337,21 @@ groups = as.data.table(europecovid)
   ## maybe find which days/countries were most severe, and then do further analysis? could this just end up finding the max of each? FIND LOCKDOWN INFO!
 ```
 
-5.  Fit the proposed model in (4) and explain your results. 
+### ANOVA Model
 
-To evaluate whether there is a difference in current mortality rate given the various proposed predictors, we performed an overall F-test as well as individual F-tests. The null hypothesis for this model is $H_0: \beta_{obesity} = \beta_{elderly} = \beta_{HCspent} = \beta_{AQI} = \beta_{density} = \beta_{med.wealth} = \beta_{HDIadj} = 0$, and the alternative hypothesis for this model is $H_a: ≥1 of the parameters is not 0$.
+The second model we will use is the analysis of variance model, which is defined as: 
+$$$$
+
+```{r}
+
+```
+
+## 5. Model Fitting
+<!--Fit the proposed model in (4) and explain your results.-->
+
+### Linear Model
+
+To evaluate whether there is a difference in current mortality rate given the various proposed predictors, we performed an overall F-test as well as individual F-tests. The null hypothesis for this model is $H_0: \beta_{obesity} = \beta_{elderly} = \beta_{HCspent} = \beta_{AQI} = \beta_{density} = \beta_{med.wealth} = \beta_{HDIadj} = 0$, and the alternative hypothesis for this model is $H_a$: ≥1 of the parameters is not 0.
 
 In the process of fitting a model, we found many countries that had missing data or were influential observations that needed to be removed. Malta has a population density of 1634 (which was four times higher than the next most densely populated country), which made further analysis on population density inconclusive. Switzerland has a median wealth of over $220,000 USD, which also lies well beyond other observations - the next-biggest outlier is \$60,000 lower than this observation. In both of these cases, the statistic is well beyond the 1.5\*IQR (or even 2\*IQR) range for outliers, so we were comfortable with removing them from the dataset. 
 
@@ -329,7 +361,7 @@ The final fitted model is as follows: $$Y_i = -0.0580 + 0.00094X_{obesity,i} + 0
 
 This model says that, an increase of 1 in any of the predictors (given that the others are fixed) will increase the mortality rate by that predictor's coefficient (e.g. an increased elderly population by one percent, with the others remaining the same, is associated with an increased mortality rate by 0.00195).
 
-The overall F-test for this model has an F-statistic of $8.397$, which corresponds to a p-value of $6.83*10^-5$. This is statistically significant at the level $\alpha=0.05$, so we must reject the null hypothesis, which states that all of the parameters are 0; and accept the alternative hypothesis, which states that at least one of the parameters is not 0. 
+The overall F-test for this model has an F-statistic of $8.397$, which corresponds to a p-value of $6.83*10^{-5}$. This is statistically significant at the level $\alpha=0.05$, so we must reject the null hypothesis, which states that all of the parameters are 0; and accept the alternative hypothesis, which states that at least one of the parameters is not 0. 
 
 Partial F-tests show that higher proportions of elderly people in a population, as well as increases in the air quality index and the amount of money spent on healthcare per capita, are all associated with higher national COVID-19 mortality rates at the significance level $\alpha=0.05$. Elderly populations are at higher risk of dying from COVID-19, as are individuals who have suffered increased lung damage from airborne particulates. The increased mortality rate among countries with higher healthcare spending per capita may be due to the country's healthcare system being less efficient at allocating resources, or the healthcare system already operating near capacity even before the COVID-19 pandemic, and becoming overwhelmed as more patients and staff require medical attention and new equipment. 
 
@@ -337,51 +369,54 @@ Partial F-tests show that higher proportions of elderly people in a population, 
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 #### We will use mortality rate as the outcome variable because it doesn't just go up all the time, instead staying at a specific rate that can only go up or down very slightly. TODO: add "change in mortality" as a variable?
 
-#preCOVIDtoCNew = lm(prcCNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.CNew); summary(preCOVIDtoCNew); anova(preCOVIDtoCNew)
-#preCOVIDtoCTotal = lm(prcCTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.CTotal); summary(preCOVIDtoCTotal); anova(preCOVIDtoCTotal)
-#preCOVIDtoDNew = lm(prcDNew~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.DNew); summary(preCOVIDtoDNew); anova(preCOVIDtoDNew)
+#preCOVIDtoCNew
+#preCOVIDtoCTotal
+#preCOVIDtoDNew
 
 #preCOVIDtoDTotal = lm(prcDTotal~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.highest.DTotal); summary(preCOVIDtoDTotal); anova(preCOVIDtoDTotal)  #
 
 ## MORTALITY RATE MODEL W/EXTRA VARIABLES
-preCOVIDtoMort = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.recent); summary(preCOVIDtoMort); anova(preCOVIDtoMort)  #
+preCOVIDtoMort = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.recent); # summary(preCOVIDtoMort); anova(preCOVIDtoMort)  #
 
 
 ## TRY REMOVING MALTA (outlier): 
 withoutmaltaEtc = europe.recent[-c(28, 40),]  # removed malta, maybe also netherlands/belgium for density, switzerland for income, as outliers?
-mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=withoutmaltaEtc); summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
+mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=withoutmaltaEtc); # summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
 
 #plot(europe.recent$ObesityPrc, europe.recent$mortality.now)
 #plot(europe.recent$ElderlyPrc, europe.recent$mortality.now)
 #plot(europe.recent$HCSpentPerCap, europe.recent$mortality.now)
 #plot(europe.recent$AQI, europe.recent$mortality.now)
+par(mfrow=c(2, 2))
 ## DEMONSTRATING MALTA AS OUTLIER
-plot(europe.recent$km.density, europe.recent$mortality.now, main="Pop. Dens., incl. Malta")
-plot(withoutmaltaEtc$km.density, withoutmaltaEtc$mortality.now, main="Pop. Dens., w/o Malta")
+plot(europe.recent$km.density, europe.recent$mortality.now, main="Pop. Dens., incl. Malta", ylab="Mortality Rate", xlab="Pop. Density")
+plot(withoutmaltaEtc$km.density, withoutmaltaEtc$mortality.now, main="Pop. Dens., w/o Malta", ylab="Mortality Rate", xlab="Pop. Density")
 ## DEMONSTRATING SWITZERLAND AS OUTLIER
-plot(europe.recent$med.wealth, europe.recent$mortality.now, main="Wealth, incl. Malta")
-plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now, main="Wealth, w/o Malta")
+plot(europe.recent$med.wealth, europe.recent$mortality.now, main="Wealth, incl. Switzerland", ylab="Mortality Rate", xlab="Wealth, per capita")
+plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now, main="Wealth, w/o Switzerland", ylab="Mortality Rate", xlab="Wealth, per capita")
 #plot(europe.recent$HDIadj, europe.recent$mortality.now)
+par(mfrow=c(1, 1))
 
 ## NEW DATASET
 woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most missing values, and this gets rid of some other outlier countries
 ## CHECKING FOR COLLINEARITY
-    pairs(cbind(woMaltafiltered$mortality.now,woMaltafiltered$ObesityPrc,woMaltafiltered$ElderlyPrc,woMaltafiltered$HCSpentPerCap,woMaltafiltered$AQI,woMaltafiltered$km.density,woMaltafiltered$med.wealth,woMaltafiltered$HDIadj), labels=c("Mortality", "Obesity", "Elderly", "HC. Spent", "AQI", "Pop. Dens.", "Med. Wealth", "HDI adj."), main="Pairwise Plots, w/o NA values/countries", gap=0.2)
+    pairs(cbind(woMaltafiltered$mortality.now,woMaltafiltered$ObesityPrc,woMaltafiltered$ElderlyPrc,woMaltafiltered$HCSpentPerCap,woMaltafiltered$AQI,woMaltafiltered$km.density,woMaltafiltered$med.wealth,woMaltafiltered$HDIadj), labels=c("Mortality", "Obesity", "Elderly", "HC. Spent", "AQI", "Pop. Dens.", "Med. Wealth", "HDI adj."), main="Pairwise Plots, w/o NA values/countries", gap=0.15, pch=3)
 ## PRINCIPAL COMPONENT ANALYSIS FOR VARIANCE/EIGENVECTORS
 eu.pca = select(woMaltafiltered, c("ObesityPrc", "ElderlyPrc", "HCSpentPerCap", "AQI", "km.density", "med.wealth", "HDIadj")) %>% prcomp(center=TRUE, scale=TRUE)
 ## SCREE PLOT
-plot(eu.pca, type="lines", main="Scree Plot for the PCA")
-    #eu.pca[["rotation"]]
+plot(eu.pca, type="lines", main="Scree Plot for the PCA", xlab="PC index")
+    "First Two PC's Coefficients: "
+    eu.pca[["rotation"]][,1];eu.pca[["rotation"]][,2]
 pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x)))
     #plot(pca.frame$PC1, pca.frame$PC2); abline(v=0); abline(h=0)
 ## VISUALIZING PC CONTENTS
-    plot(eu.pca[["rotation"]][,1], eu.pca[["rotation"]][,2], xlab="PC1",ylab="PC2", main="First Two PCAs' Transformations", pch=9); abline(v=0); abline(h=0) # new axes
-    text(eu.pca[["rotation"]][,2]~eu.pca[["rotation"]][,1], labels=row.names(eu.pca[["rotation"]]), adj=c(-0.2, 1),cex=0.65, srt=15)
+    plot(eu.pca[["rotation"]][,1], eu.pca[["rotation"]][,2], xlab="PC1",ylab="PC2", main="First Two PCs' Transformations", pch=9); abline(v=0); abline(h=0) # new axes
+    text(eu.pca[["rotation"]][,2]~eu.pca[["rotation"]][,1], labels=row.names(eu.pca[["rotation"]]), adj=c(-0.2, 1),cex=0.55, srt=15)
 # woMfilt.long = pivot_longer(pca.frame, cols=!country, names_to="PC", values_to="Coefficient")
 # woMfilt.long %>% filter(PC %in% c('PC1','PC2','PC3','PC4','PC5','PC6','PC7')) %>% ggplot(aes(x=country, y=Coefficient, colour = PC)) + geom_line()
 
 ## FINAL MODEL, AFTER REMOVING EXTRA VARS
-final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density, data=withoutmaltaEtc); summary(final.mortnoMaltaEtc); anova(final.mortnoMaltaEtc)
+final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density, data=withoutmaltaEtc); #summary(final.mortnoMaltaEtc); anova(final.mortnoMaltaEtc)
 
 
 # moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
@@ -393,27 +428,58 @@ final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+
 #ts.plot(resids)
 ```
 
-6.  Conduct model diagnostics and/or sensitivity analysis. 
+### ANOVA Model
+
+```{r, echo=FALSE}
+
+```
+
+## 6. Model Diagnostics
+<!--Conduct model diagnostics and/or sensitivity analysis. -->
+
+### Linear Model
 
 Based on the fitted-to-residuals plot, the residual terms $\epsilon_i$ seem to have mostly constant variance as the x-variables change (with a few exceptions), but there is some slight non-linearity in the residuals as well as some outliers (specifically Hungary, Serbia, and Slovakia). The errors seem to be generally normally distributed according to the QQ-plot. The Shapiro-Wilk test for normality has a p-value of 0.7393, which is not statistically significant at the level $\alpha = 0.05$, so it seems reasonable to accept the null hypothesis: the errors are normally distributed. 
+
+The aforementioned outliers also make the scale-location plot somewhat nonlinear, and there are some outliers in terms of Cook's distance (including an additional outlier: Bosnia & Herzegovina) and the data's leverage. 
 
 The variance inflation factor has a value of 5.613 (≥5) for HCSpentPerCap when all of the variables from the full model are analyzed, so there is some multicollinearity between the variables. After removing some similar variables (as determined by clusters in the PCA), the VIF is diminished enough to reasonably assume a lack of multicollinearity. 
 
 ```{r, echo=FALSE}
+par(mfrow=c(2, 2))
 plot(final.mortnoMaltaEtc, which=1)
 plot(final.mortnoMaltaEtc, which=2)
+plot(final.mortnoMaltaEtc, which=3)
+plot(final.mortnoMaltaEtc, which=5)
+par(mfrow=c(1, 1))
 shapiro.test(resid(final.mortnoMaltaEtc))
 "VIF for original & final models"
 vif(mortnoMaltaEtc)
 vif(final.mortnoMaltaEtc)
 ```
 
-7. Conclude your analysis with a discussion of your findings and caveats of your approach. 
+### ANOVA Model
+
+
 
 ```{r, echo=FALSE}
 
 ```
 
+## 7. Conclusion
+<!--Conclude your analysis with a discussion of your findings and caveats of your approach. -->
+
+### Linear Model
+
+From our analysis, we saw that the higher a country's air pollution levels, healthcare spending per capita, and elderly proportion of the population, the higher the mortality rate they were likely to report. One interesting possibility based on this analysis is that how affluent a country is, measured through median wealth and adjusted HDI, still cannot fully account for the variance in a country’s COVID-19 mortality rate: these predictors do not account for as much variance as healthcare expenditures per capita does, which may imply that a good healthcare system (perhaps exemplified through efficiently spending money/acquiring resources and not being near full capacity, where scarcity will drive up costs) may be a stronger predictor of mortality rate than the wealth and development of the country. It may also be possible that wealth and development prevent COVID-19 transmission (due to the possibility of working from home and buying PPE) but not deaths (which probably occur once a patient is already in the healthcare system), so further analysis is necessary, as well as some method of normalizing wealth with cost of living. 
+
+A major caveat of this approach is that we focused solely on larger European countries, specifically comparing Eastern to Western European countries; such a distinct divide does not officially exist within Europe, especially as many Eastern European countries have begun to assimilate into greater Europe and the EU since the end of the Warsaw Pact. As for air pollution levels and healthcare practices, a caveat of this approach would be that we did not compare Europe as a whole or other first-world countries, such as Canada, to a higher-polluted area with different healthcare practices, such as China or India (which are both exceptionally populated and polluted due to their status as a developing country). Furthermore, the presence of air quality monitoring systems were mostly in cities; though this may account for the fact that more people generally live in cities, it is not fully adjusted for the population density that any given individual could live in. However, we were still able to establish that exposure to higher air pollution levels on a national scale does exacerbate a population’s vulnerability to the effects of coronavirus. 
+
+Another caveat of our approach is that Italy's elderly population has, for a long time, been a large percentage of their country's entire population as do other smaller Eastern European countries. By specifically concentrating on average population age within Europe, our approach may be skewed in that we saw a higher average population age than we would have seen in Mexico or Canada. Furthermore, we noticed similar safety practices and guidelines enacted across the continent (likely due to the European Union) versus what we may have seen if we were to compare Europe to other countries (e.g. the United States) in later analysis on policy changes throughout the last year. 
+ 
+### ANOVA Model (Policy changes through March - October)
+
+Based on the analysis above, we can conclude that requiring facial coverings outside at all times has the greatest impact on reducing the number of new cases compared to other tiers, while stay-at-home restrictions did not seem to impact the number of new cases as much, which is contradictory to common belief. However, a major caveat includes the fact that there exists multicollinearity between the variables for the two individual policies, so independent analysis of both variables is required to properly analyze the model and interpret its results. Another alternative would be to choose another policy entirely in order to avoid interaction between the predictor variables. For example, future research can be conducted using facial coverings and testing policies instead, as they are more independent from each other than the currently chosen policies. A second caveat is that the two-way ANOVA model for these policies was only fit to the number of new cases in France. Future research can be conducted by aggregating multiple countries that are similar to one another in terms of how they implement these policies, and performing a two-way ANOVA model with the aggregated countries and a single policy as the predictor variables.
 
 
 ```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
