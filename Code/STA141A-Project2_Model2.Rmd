@@ -253,10 +253,6 @@ colnames(face.coverings)[3] <- "Date_reported"
 colnames(stay.at.home)[3] <- "Date_reported"
 colnames(public.events)[3] <- "Date_reported"
 
-
-#EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
-#nonEUcountries = c("Albania", "Andorra", "Armenia", "Azerbaijan", "Belarus", "Bosnia and Herzegovina", "Georgia", "Iceland", "Liechtenstein", "Moldova", "Monaco", "Montenegro", "Norway", "Russia", "Serbia", "Switzerland", "Turkey", "Ukraine", "The United Kingdom")
-
 var = "France"
 covid <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
 face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
@@ -265,47 +261,46 @@ public.events <- filter(public.events, Country == var, Date_reported >= "2020-03
 
 policy.data <- inner_join(covid,face.coverings, by=c("Date_reported","Country"))
 policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
-#policy.data <- inner_join(policy.data, public.events, by=c("Date_reported","Country"))
 
 drops <- c("Code.x", "Code.y", "Code", "Country_code")
 policy.data[ , !(names(policy.data) %in% drops)]
 head(policy.data)
 
-#Have to convert each of the categories to labels i.e. 1 (restricted), 2 (mandated) using as.factor so that when we do anova, we can see which levels are actually impacting the number of new cases
-
 policy.data$facial_coverings = factor(policy.data$facial_coverings)
-levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required = "4")
+levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
 is.factor(policy.data$facial_coverings)
 head(policy.data)
 unique(policy.data$facial_coverings)
 
 policy.data$stay_home_requirements = factor(policy.data$stay_home_requirements)
-levels(policy.data$stay_home_requirements) <- list(No_policy = "0", Recommended = "1", Required_with_exceptions = "2", Required_min_exceptions = "3")
+levels(policy.data$stay_home_requirements) <- list(No_measures = "0", Recommended_not_leave = "1", Required_with_exceptions = "2", Required_miimal_exceptions = "3")
 is.factor(policy.data$stay_home_requirements)
 head(policy.data)
 unique(policy.data$stay_home_requirements)
 
-
-
-
-#2 countries from Western Europe vs 2 countries from Eastern Europe?
-#1 model from before Holiday season (March-October) and 1 model after (December-?)
 ```
 
 ##### Univariate Analysis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(pastecs)
+```
+
 ```{r}
 summary(policy.data) #No NaNs in dataset, so no need to drop anything
 
-library(pastecs)
 stat.desc(policy.data, basic=F)
 
+summary(policy.data$New_cases)
+
+negative.cases <- filter(policy.data, policy.data$New_cases < 0)
+nrow(negative.cases) %>% print
+nrow(policy.data) %>% print
 
 ggplot(data=policy.data, aes(x=Date_reported, y=New_cases)) +
   geom_line(alpha=0.9) +
   ggtitle("Date vs New Cases") +
   xlab("Date") +
   ylab("New Cases")
-       
 
 ggplot(data=policy.data, mapping=aes(x=facial_coverings, y=New_cases)) +
   geom_boxplot() +
@@ -348,18 +343,12 @@ boxplot(policy.data$New_cases ~ policy.data$stay_home_requirements, xlab = "Stay
 
 
 5. Model #2
-```{r}
-
-#COVID.policy.cases.lm = lm(New_cases~facial_coverings+stay_home_requirements+cancel_public_events, data=policy.data)
-#summary(COVID.policy.cases.lm)
+```{r, echo=FALSE}
 
 head(policy.data)
 
 COVID.policy.cases.aov = aov(New_cases~facial_coverings+stay_home_requirements,data=policy.data)
 summary(COVID.policy.cases.aov)
-
-#H0:α1=α2=α3=0, meaning there is no difference among categories
-
 
 TukeyHSD(COVID.policy.cases.aov, "facial_coverings")
 plot(TukeyHSD(COVID.policy.cases.aov, "facial_coverings"))
@@ -367,10 +356,6 @@ plot(TukeyHSD(COVID.policy.cases.aov, "facial_coverings"))
 TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements")
 plot(TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements"))
 
-
-
-
-#Focus on date a little more? Pre vs post Holidays
 ```
 
 
