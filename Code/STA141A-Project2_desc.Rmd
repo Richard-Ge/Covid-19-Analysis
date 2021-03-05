@@ -63,6 +63,7 @@ The following list provides one potential structure of the data analysis report.
 library(usethis, warn.conflicts=F)
     use_git_config(user.name = "Richard-Ge", user.email = "richardge951@gmail.com")
 library(tidyverse, warn.conflicts=F)
+library(pastecs)
 library(car, warn.conflicts=F)
     covid <- read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
 library(lubridate, warn.conflicts=F)
@@ -77,7 +78,7 @@ The global COVID-19 pandemic has caused a large number of deaths since it was fi
 
 We will primarily be using the WHO's global COVID-19 dataset in this report, which includes the date a country (labeled by their country code and also by their region in the world) reported a new case or death, as well as the updated cumulative number of cases and deaths. We will only be exploring specific Eastern European countries compared to specific Western European countries in this report because of their similar yet vastly different environments--similar weather, social healthcare provisions, and government policies vs. differing air pollution levels and population ages. 
 
-Our second question of interest is examining how policy updates (mask mandates and stay-at-home restrictions) in those countries affect the number of new cases per capita from March to October. Since the levels of each of these policies may have different meanings in different countries, we will only be exploring one specific European country that displays a strong balance between all of the categories for this analysis (i.e. recommended, required with exceptions, etc.). Additionally, we are focusing on the specific timeframe of March to October to see how policies normalized overtime, as March marked the beginning of the lockdown period in which many policies were enacted in countries, while October is the six-month milestone before the major Holiday season.
+Our second question of interest is examining how policy updates (mask mandates and stay-at-home restrictions) in those countries affect the number of new cases per capita from March to October. Since the levels of each of these policies may have different meanings in different countries, we will only be exploring one specific European country (France) that displays a strong balance between all of the categories for this analysis (i.e. recommended, required with exceptions, etc.). Additionally, we are focusing on the specific timeframe of March to October to see how policies normalized overtime, as March marked the beginning of the lockdown period in which many policies were enacted in countries, while October is the six-month milestone before the major Holiday season.
 
 ## 2. Background
 <!--Review the background of the coronavirus. -->
@@ -229,11 +230,153 @@ for(country1 in unique(europecovid$Country)){
 names(summarystats) = c("Total Cases", "Total Deaths")
 ## REPORT SUMMARY STATS:
 eu.stats; summarystats
+europe.recent %>% select(5:21) %>% stat.desc(basic=F)
+```
+<!--end of Richard's summary stats-->
+
+### ANOVA Model: Policy Summary Stats
+
+For France, the number of new cases has a mean of 2503 and a median of 1025, indicating that the distribution is positively skewed. Out of the 215 observations of new cases for France, one of them appears to be negative at a value of -840, which seems to be an outlier but does not have any leverage on the rest of the data as indicated by the Residuals versus Leverage plot generated during sensitivity analysis later on in the report. Additionally, the variable has a lower quartile of 356, an upper quartile of 3742, and a standard deviation of 3301.58. A boxplot of each individual policy was plotted against new cases as well their counts. 
+
+```{r, echo=FALSE}
+## SETTING UP DATA
+face.coverings <- read_csv("~/Documents/face-covering-policies-covid.csv")
+stay.at.home <- read_csv("~/Documents/stay-at-home-covid.csv")
+public.events <- read_csv("~/Documents/public-events-covid.csv")
+
+colnames(face.coverings)[1] <- "Country"
+colnames(stay.at.home)[1] <- "Country"
+colnames(public.events)[1] <- "Country"
+
+colnames(face.coverings)[3] <- "Date_reported"
+colnames(stay.at.home)[3] <- "Date_reported"
+colnames(public.events)[3] <- "Date_reported"
+
+var = "France"
+covid <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+stay.at.home <- filter(stay.at.home, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+public.events <- filter(public.events, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+
+policy.data <- inner_join(covid,face.coverings, by=c("Date_reported","Country"))
+policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
+
+drops <- c("Code.x", "Code.y", "Code", "Country_code")
+policy.data[ , !(names(policy.data) %in% drops)]
+#head(policy.data)
+
+policy.data$facial_coverings = factor(policy.data$facial_coverings)
+levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
+#is.factor(policy.data$facial_coverings)
+#head(policy.data)
+#unique(policy.data$facial_coverings)
+
+policy.data$stay_home_requirements = factor(policy.data$stay_home_requirements)
+levels(policy.data$stay_home_requirements) <- list(No_measures = "0", Recommended_not_leave = "1", Required_with_exceptions = "2", Required_miimal_exceptions = "3")
+#is.factor(policy.data$stay_home_requirements)
+#head(policy.data)
+#unique(policy.data$stay_home_requirements)
 ```
 
-### ANOVA Model
+```{r, echo=FALSE}
+face.coverings <- read_csv("~/Documents/face-covering-policies-covid.csv")
+stay.at.home <- read_csv("~/Documents/stay-at-home-covid.csv")
+public.events <- read_csv("~/Documents/public-events-covid.csv")
+
+colnames(face.coverings)[1] <- "Country"
+colnames(stay.at.home)[1] <- "Country"
+colnames(public.events)[1] <- "Country"
+
+colnames(face.coverings)[3] <- "Date_reported"
+colnames(stay.at.home)[3] <- "Date_reported"
+colnames(public.events)[3] <- "Date_reported"
+
+var = "France"
+covid2 <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+stay.at.home <- filter(stay.at.home, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+public.events <- filter(public.events, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+
+policy.data <- inner_join(covid2,face.coverings, by=c("Date_reported","Country"))
+policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
+
+drops <- c("Code.x", "Code.y", "Code", "Country_code")
+policy.data[ , !(names(policy.data) %in% drops)]
+#head(policy.data)
+
+"Summaries of Variables"
+policy.data %>% select(5:12) %>% stat.desc(basic=F)
+
+policy.data$facial_coverings = factor(policy.data$facial_coverings)
+levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
+is.factor(policy.data$facial_coverings)
+#head(policy.data)
+#unique(policy.data$facial_coverings)
+
+policy.data$stay_home_requirements = factor(policy.data$stay_home_requirements)
+levels(policy.data$stay_home_requirements) <- list(No_measures = "0", Recommended_not_leave = "1", Required_with_exceptions = "2", Required_miimal_exceptions = "3")
+#is.factor(policy.data$stay_home_requirements)
+#head(policy.data)
+#unique(policy.data$stay_home_requirements)
+
+```
+
+##### Univariate Analysis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(pastecs)
+```
+
+```{r, echo=FALSE}
+#"Summaries of Data"
+#summary(policy.data) #No NaNs in dataset, so no need to drop anything
+"Summary of New Cases"
+summary(policy.data$New_cases)
+
+negative.cases <- filter(policy.data, policy.data$New_cases < 0)
+#nrow(negative.cases) %>% print
+#nrow(policy.data) %>% print
+
+ggplot(data=policy.data, aes(x=Date_reported, y=New_cases)) +
+  geom_line(alpha=0.9) +
+  ggtitle("Date vs New Cases") +
+  xlab("Date") +
+  ylab("New Cases")
+
+ggplot(data=policy.data, mapping=aes(x=facial_coverings, y=New_cases)) +
+  geom_boxplot() +
+  ggtitle("Facial Covering Requirements vs New Cases") +
+  xlab("Facial Covering Requirements") +
+  ylab("New Cases")
+
+ggplot(data=policy.data, mapping=aes(x=facial_coverings)) +
+  geom_bar() +
+  ggtitle("Count of Facial Covering Requirements") +
+  xlab("Facial Covering Requirements") +
+  ylab("Count")
 
 
+ggplot(data=policy.data, mapping=aes(x=stay_home_requirements, y=New_cases)) +
+  geom_boxplot() +
+  ggtitle("Stay-at-home Requirements vs New Cases") +
+  xlab("Stay-at-home Requirements") +
+  ylab("New Cases")
+
+ggplot(data=policy.data, mapping=aes(x=stay_home_requirements)) +
+  geom_bar() +
+  ggtitle("Count of Stay-at-home Requirements") +
+  xlab("Stay-at-home Requirements") +
+  ylab("Count")
+
+
+```
+
+##### Multivariate Analysis
+```{r, echo=FALSE}
+boxplot(policy.data$New_cases ~ policy.data$facial_coverings, xlab = "Facial Covering Requirements", ylab = "New Cases", main="Boxplot of New Cases by Facial Covering Requirements")
+
+boxplot(policy.data$New_cases ~ policy.data$stay_home_requirements, xlab = "Stay-at-home Requirements", ylab = "New Cases", main="Boxplot of New Cases by Stay-at-home Requirements")
+
+```
 
 ## 4. Models
 <!--
@@ -339,10 +482,22 @@ groups = as.data.table(europecovid)
 
 ### ANOVA Model
 
-The second model we will use is the analysis of variance model, which is defined as: 
-$$$$
+For the second question of interest, we will be using a two-way ANOVA model to determine how individual policies, particularly facial coverings and stay-at-home restrictions, drafted by governments affect the spread of COVID-19 and thus, the number of new cases. The two-way ANOVA model will be used to examine how two independent variables affect a single dependent variable. In this case, facial coverings and stay-at-home restrictions are independent from each other as one policy applies restrictions when outside while the other applies restrictions when inside, so in theory, we are assuming that they are mutually exclusive. Other assumptions are that there is a linear relationship between the predictor and outcome variables, the variables are independent from each other, no multicollinearity, and the residuals are linear and normally distributed. This model is ideal in understanding not only which policies directly impact the number of new cases, but which levels of those policies are the most significant as well, making it more suitable for our question of interest than regression models that only provide an overall relationship between predictor variables and an outcome variable.
 
-```{r}
+The two-way ANOVA model is defined as $$Y_{ijk}=μ...+α_i+β_j+ϵ_{ijk}$$ where i represents the level of facial covering policy, j represents the level of stay-at-home policy, and μ represents the overall mean of new cases. In addition, $α_i$ represents the effect due to the i-th facial covering policy, $β_j$ represents the effect due to the j-th stay-at-home policy, and $ϵ_{ijk}$ represents the error term in the i-th facial covering policy, j-th stay-at-home policy, and k-th observation. Lastly, $Y_{ijk}$ represents the effect due to interaction between the i-th facial covering policy, j-th stay-at-home policy, and k-th observation.
+
+```{r, echo=FALSE}
+
+#head(policy.data)
+
+COVID.policy.cases.aov = aov(New_cases~facial_coverings+stay_home_requirements,data=policy.data)
+summary(COVID.policy.cases.aov)
+
+TukeyHSD(COVID.policy.cases.aov, "facial_coverings")
+plot(TukeyHSD(COVID.policy.cases.aov, "facial_coverings"))
+
+TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements")
+plot(TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements"))
 
 ```
 
@@ -404,7 +559,7 @@ woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most mi
 ## PRINCIPAL COMPONENT ANALYSIS FOR VARIANCE/EIGENVECTORS
 eu.pca = select(woMaltafiltered, c("ObesityPrc", "ElderlyPrc", "HCSpentPerCap", "AQI", "km.density", "med.wealth", "HDIadj")) %>% prcomp(center=TRUE, scale=TRUE)
 ## SCREE PLOT
-plot(eu.pca, type="lines", main="Scree Plot for the PCA", xlab="PC index")
+plot(eu.pca, type="lines", main="Scree Plot for the PCA")
     "First Two PC's Coefficients: "
     eu.pca[["rotation"]][,1];eu.pca[["rotation"]][,2]
 pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x)))
@@ -430,9 +585,9 @@ final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+
 
 ### ANOVA Model
 
-```{r, echo=FALSE}
+To evaluate whether there is a difference in new cases among different levels of facial covering mandates and stay-at-home restrictions, an F-test was performed. The null hypothesis for this model is that $H_0: \alpha_1=\alpha_2=\alpha_3=0$, meaning that there is no difference in mean new cases among different levels of policies, while the alternative hypothesis is Ha: not all \alpha s are zero, meaning there is a difference in mean new cases among different levels of policies. After calculating the summary of our fit ANOVA mode, the test statistic for facial coverings was 67.94 with a P-value of 2e-16, while the test statistic for stay-at-home requirements was 4.78 with a P-value of 0.00934. Since both of these P-values are much lower than the significance level of 0.05, we reject the null hypothesis and conclude that there exists a difference in mean new cases among different levels of policies for facial coverings and stay-at-home requirements. 
+Tukey’s range test was used to determine which level of each policy was associated with the highest difference in new cases, with a plot of each policy’s 95% confidence interval generated as well. The assumptions of the test are that the groups associated with each mean are normally distributed, homogeneity of variance is present, and the tested observations are independent for the groups. Based on these results, the difference in the number of new cases with facial coverings recommended is higher than that of facial coverings required in some specified shared or public spaces by roughly 514.6282 to 2564.889 new cases with an average of 1539.7588 cases. Additionally, this difference is higher for recommended facial coverings than coverings required outside the home at all times by -2226.5205 to 1337.206 cases with an average of 444.6571 cases. Facial coverings required outside at all times also results in a higher difference than coverings required in some public spaces by 4579.671 to 6721.2047 cases with an average of 5650.4381, in addition to coverings required in all public spaces by 3399.339 to 7012.2229 cases with an average of 5205.7810 cases. Since these ranges do not overlap with zero and each have P-values much smaller than 0.05, then we can conclude with 95% confidence that requiring facial coverings outside at all times results in the least number of new cases compared to other policies. Additionally, based on these results, the difference in the number of new cases did not significantly vary with different levels of stay-at-home restrictions, so the null hypothesis cannot be rejected for this policy and stay-at-home restrictions did not impact the number of new cases. 
 
-```
 
 ## 6. Model Diagnostics
 <!--Conduct model diagnostics and/or sensitivity analysis. -->
@@ -460,10 +615,30 @@ vif(final.mortnoMaltaEtc)
 
 ### ANOVA Model
 
+Based on the residuals versus fitted plot, the residuals seem to be equally spread due to the red horizontal line around the y = 0 line, indicating that there is a linear relationship between the two values with equal variance of errors with minimal outliers. However, according to the normal Q-Q plot, the generated plot does not have a completely straight line across the residuals as there are heavy tails on either end and the slope is relatively small, indicating that the residuals are not normally distributed and further analysis is required. A scale-location plot was also generated, which indicates that the residuals are not equally spread and that there is indeed unequal variance among these points, so further analysis is also required. Lastly, the residuals versus leverage plot has a horizontal line around y = 0, so it seems that there are no outlier points contributing to the linear relationship. As a result, some of the assumptions for the classic linear model such as the error term having constant variance may not have been met.
 
+##### Residuals Vs Fitted
 
 ```{r, echo=FALSE}
+plot(COVID.policy.cases.aov,which=1)
+```
 
+##### Normal Q-Q
+
+```{r, echo=FALSE}
+plot(COVID.policy.cases.aov, which=2)
+```
+
+##### Scale-Location
+
+```{r, echo=FALSE}
+plot(COVID.policy.cases.aov, which=3)
+```
+
+##### Residuals vs Leverage
+
+```{r, echo=FALSE}
+plot(COVID.policy.cases.aov,which=5)
 ```
 
 ## 7. Conclusion
@@ -479,8 +654,7 @@ Another caveat of our approach is that Italy's elderly population has, for a lon
  
 ### ANOVA Model (Policy changes through March - October)
 
-Based on the analysis above, we can conclude that requiring facial coverings outside at all times has the greatest impact on reducing the number of new cases compared to other tiers, while stay-at-home restrictions did not seem to impact the number of new cases as much, which is contradictory to common belief. However, a major caveat includes the fact that there exists multicollinearity between the variables for the two individual policies, so independent analysis of both variables is required to properly analyze the model and interpret its results. Another alternative would be to choose another policy entirely in order to avoid interaction between the predictor variables. For example, future research can be conducted using facial coverings and testing policies instead, as they are more independent from each other than the currently chosen policies. A second caveat is that the two-way ANOVA model for these policies was only fit to the number of new cases in France. Future research can be conducted by aggregating multiple countries that are similar to one another in terms of how they implement these policies, and performing a two-way ANOVA model with the aggregated countries and a single policy as the predictor variables.
-
+Based on the analysis above, we can conclude that requiring facial coverings outside at all times has the greatest impact on reducing the number of new cases compared to other tiers, while stay-at-home restrictions did not seem to impact the number of new cases as much, which is contradictory to common belief. However, a major caveat includes the fact that there exists multicollinearity between the variables for the two individual policies, so independent analysis of both variables is required to properly analyze the model and interpret its results. Another alternative would be to choose another policy entirely in order to avoid interaction between the predictor variables. For example, future research can be conducted using facial coverings and testing policies instead, as they are more independent from each other than the currently chosen policies. A second caveat is that the two-way ANOVA model for these policies was only fit to the number of new cases in France. Future research can be conducted by aggregating multiple countries that are similar to one another in terms of how they implement these policies, and performing a two-way ANOVA model with the aggregated countries and a single policy as the predictor variables. A third caveat to our approach is that the timeframe for our analysis is limited to a six month period. Due to the major holiday season, many countries experienced spikes in cases, and therefore made changes to their existing policies by either enforcing them more strictly (i.e. enforcing lockdowns) or relaxing them (i.e. ending curfews). We limited our data analysis to the months before the holiday season to avoid any variance in the fluctuating number of cases and extreme policy changes that took place after October.
 
 ```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 

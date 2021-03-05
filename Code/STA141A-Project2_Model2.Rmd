@@ -192,7 +192,7 @@ europe.highest.DTotal=europe.highest.DTotal[!duplicated(europe.highest.DTotal$pr
 ```{r}
 #dont use CNew, CTotal, DNew yet because the day-to-day variation is too high, or the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 
-head(europe.highest.DTotal,20)
+#head(europe.highest.DTotal,20)
 europe.highest.DTotal %>% filter(Country == "Albania") %>% print
 unique(europe.highest.DTotal$Date_reported)
 nrow(europe.highest.DTotal)
@@ -232,6 +232,7 @@ plot(europe.highest.DTotal$HCSpentPerCap, europe.highest.DTotal$prcDTotal)
 
 
 
+<!--RAHUL's CODE-->
 
 # MODEL 2
 
@@ -254,29 +255,29 @@ colnames(stay.at.home)[3] <- "Date_reported"
 colnames(public.events)[3] <- "Date_reported"
 
 var = "France"
-covid <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
+covid2 <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
 face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
 stay.at.home <- filter(stay.at.home, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
 public.events <- filter(public.events, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
 
-policy.data <- inner_join(covid,face.coverings, by=c("Date_reported","Country"))
+policy.data <- inner_join(covid2,face.coverings, by=c("Date_reported","Country"))
 policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
 
 drops <- c("Code.x", "Code.y", "Code", "Country_code")
 policy.data[ , !(names(policy.data) %in% drops)]
-head(policy.data)
+#head(policy.data)
 
 policy.data$facial_coverings = factor(policy.data$facial_coverings)
 levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
 is.factor(policy.data$facial_coverings)
-head(policy.data)
-unique(policy.data$facial_coverings)
+#head(policy.data)
+#unique(policy.data$facial_coverings)
 
 policy.data$stay_home_requirements = factor(policy.data$stay_home_requirements)
 levels(policy.data$stay_home_requirements) <- list(No_measures = "0", Recommended_not_leave = "1", Required_with_exceptions = "2", Required_miimal_exceptions = "3")
-is.factor(policy.data$stay_home_requirements)
-head(policy.data)
-unique(policy.data$stay_home_requirements)
+#is.factor(policy.data$stay_home_requirements)
+#head(policy.data)
+#unique(policy.data$stay_home_requirements)
 
 ```
 
@@ -286,15 +287,16 @@ library(pastecs)
 ```
 
 ```{r}
+"Summaries of Data"
 summary(policy.data) #No NaNs in dataset, so no need to drop anything
-
+"Summaries of Variables"
 stat.desc(policy.data, basic=F)
-
+"Summary of New Cases"
 summary(policy.data$New_cases)
 
 negative.cases <- filter(policy.data, policy.data$New_cases < 0)
-nrow(negative.cases) %>% print
-nrow(policy.data) %>% print
+#nrow(negative.cases) %>% print
+#nrow(policy.data) %>% print
 
 ggplot(data=policy.data, aes(x=Date_reported, y=New_cases)) +
   geom_line(alpha=0.9) +
@@ -339,13 +341,13 @@ boxplot(policy.data$New_cases ~ policy.data$stay_home_requirements, xlab = "Stay
 
 ```
 
-
+<!--summary stats end here-->
 
 
 5. Model #2
 ```{r, echo=FALSE}
 
-head(policy.data)
+#head(policy.data)
 
 COVID.policy.cases.aov = aov(New_cases~facial_coverings+stay_home_requirements,data=policy.data)
 summary(COVID.policy.cases.aov)
@@ -358,7 +360,7 @@ plot(TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements"))
 
 ```
 
-
+<!-- other stuff in google doc -->
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
 
