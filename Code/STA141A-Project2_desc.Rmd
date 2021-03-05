@@ -139,7 +139,7 @@ newcovid = mutate(newcovid,
                   prcDTotal=Cumulative_deaths*100/Population, # total deaths/pop -> %
                   mortality.now=Cumulative_deaths/Cumulative_cases)  
 # View(newcovid)
-## TODO: get summary statistics e.g. total deaths (+ per region), percent of country infected, etc. Make a table called "summary statistics" and name the columns!
+## TODO: get summary statistics e.g. total deaths (+ per region), percent of country infected, etc.?
 
 covid20 = newcovid %>% filter(Date_reported < "2021-01-01")  # View(covid20)
 covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
@@ -213,7 +213,7 @@ eu.stats; summarystats
 
 One model we will use is the simple linear model, which is defined as follows: $$Y_{i} = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... + \beta_{p}X_{ip} + \epsilon_{i}$$ 
 
-There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuing countries, while the intercept of the model is at $p=0$).
+There are $p+1$ (when including the intercept $\beta_{0}$) coefficients $\beta_{p}$, $p$ predictor variables $X_{ip}$, and outcome variables $Y_i$. The error terms are represented by $\epsilon_{i}$. The index $i$ denotes the $i$'th observation (in our context, the $i$'th country analyzed), while the index $p$ denotes the $p$'th predictor ($p$ denotes a metric for measuing countries, while the intercept of the model is at $p=0$). The proposed predictors are as follows: percent of the population that is obese, percent of the population that is elderly, total health expenditure per capita (in $USD), air quality index (AQI) aggregated per country, population density (per km^2), median wealth, and inequality-adjusted HDI (the unadjusted HDI is the theoretical development of a country, while the adjusted version accounts for a decrease due to inequality). 
 
 The assumptions are as follows: there is a linear relationship between the predictor and outcome variables, the variables are independent from each other, no multicollinearity, and the residuals are linear and normally distributed. 
 
@@ -301,6 +301,8 @@ europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth
 
 5.  Fit the proposed model in (4) and explain your results. 
 
+
+
 ```{r, echo=FALSE}
 #dont use CNew, DNew yet because the day-to-day variation is too high, and the ways it can change are too numerous. we want to look at how things that happened before the pandemic even started are affecting the outcome
 #### We will use mortality rate as the outcome variable because it doesn't just go up all the time, instead staying at a specific rate that can only go up or down very slightly. TODO: add "change in mortality" as a variable?
@@ -313,7 +315,7 @@ europe.highest.DTotal = europe.highest.DTotal %>% mutate(  #orig. HC, med.wealth
 
 preCOVIDtoMort = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth+HDIadj, data=europe.recent); summary(preCOVIDtoMort); anova(preCOVIDtoMort)  #
 
-# try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in. redo models with mortality rate?
+# try removing malta?   #### TODO: look at other outliers too? explain why each one should be removed/kept in
 withoutmaltaEtc = europe.recent[-c(28, 40),]  # removed malta, maybe also netherlands/belgium for density, switzerland for income, as outliers?
 mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density+med.wealth, data=withoutmaltaEtc); summary(mortnoMaltaEtc); anova(mortnoMaltaEtc)
 
@@ -328,9 +330,13 @@ plot(withoutmaltaEtc$med.wealth, withoutmaltaEtc$mortality.now)
 plot(europe.recent$HDIadj, europe.recent$mortality.now)
 
 woMaltafiltered = withoutmaltaEtc %>% filter(!is.na(AQI))  # AQI has the most missing values
-eu.pca = select(woMaltafiltered, -c("Date_reported", "Country", "Country_code", "WHO_region")) %>% prcomp(center=TRUE, scale=TRUE)
+eu.pca = select(woMaltafiltered, c("ObesityPrc", "ElderlyPrc", "HCSpentPerCap", "AQI", "km.density", "med.wealth", "HDIadj")) %>% prcomp(center=TRUE, scale=TRUE)
 plot(eu.pca, type="lines")
-# pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x)))
+eu.pca[["rotation"]]
+pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x)))
+    #plot(pca.frame$PC1, pca.frame$PC2); abline(v=0); abline(h=0)
+    plot(eu.pca[["rotation"]][,1], eu.pca[["rotation"]][,2], xlab="PC1",ylab="PC2", main="First Two PCAs' Transformation", pch=9); abline(v=0); abline(h=0) # new axes
+    text(eu.pca[["rotation"]][,2]~eu.pca[["rotation"]][,1], labels=row.names(eu.pca[["rotation"]]), adj=c(-0.2, -0.2),cex=0.55)
 # woMfilt.long = pivot_longer(pca.frame, cols=!country, names_to="PC", values_to="Coefficient")
 # woMfilt.long %>% filter(PC %in% c('PC1','PC2','PC3','PC4','PC5','PC6','PC7')) %>% ggplot(aes(x=country, y=Coefficient, colour = PC)) + geom_line()
 
@@ -345,8 +351,12 @@ plot(eu.pca, type="lines")
 
 6.  Conduct model diagnostics and/or sensitivity analysis. 
 
-```{r, echo=FALSE}
+The residual terms $\epsilon_i$ have mostly constant variance as the x-variables change (with a few exceptions) and are generally normally distributed according to the QQ-plot. The Shapiro-Wilk test for normality has a p-value that is not statistically significant at the level $\alpha = 0.05$, so we accept the null hypothesis: the errors are normally distributed. 
 
+```{r, echo=FALSE}
+plot(mortnoMaltaEtc, which=1)
+plot(mortnoMaltaEtc, which=2)
+shapiro.test(resid(mortnoMaltaEtc))
 ```
 
 7. Conclude your analysis with a discussion of your findings and caveats of your approach. 
@@ -358,3 +368,5 @@ plot(eu.pca, type="lines")
 ```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 
 ```
+
+<!--text(dist ~speed, labels=speed,data=cars, cex=0.9, font=2)-->
