@@ -146,6 +146,7 @@ covid21 = newcovid %>% filter(Date_reported >= "2021-01-01")
 
 
 time.since.start = max(covid$Date_reported) - min(covid$Date_reported)
+time.since.first = max(covid$Date_reported) - ymd("2020-1-24")
 recent.data = filter(covid21, Date_reported == Sys.Date()-1)  # or today()
 # creating dataset for "europe pre-existing markers" model:
 EUcountries = c("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden")
@@ -161,18 +162,18 @@ europe.recent = filter(europecovid, Date_reported == Sys.Date()-1)  # View(recen
 eu.total.cases = sum(europe.recent$Cumulative_cases)
 eu.total.deaths = sum(europe.recent$Cumulative_deaths)
 eu.total.mortality = eu.total.deaths*100/eu.total.cases
-eu.mean.cases = sum(europecovid$prcCNew)/422
+eu.mean.cases = sum(europecovid$prcCNew)/as.numeric(time.since.first)
 eu.median.cases = median(europecovid$prcCNew)
-eu.stats = data.frame(eu.total.cases, eu.total.deaths, eu.total.mortality, eu.mean.cases, eu.median.cases)
-names(eu.stats) = c("Total Cases", "Total Deaths", "Total Mortality (as %)", "Mean of % Changes in Case Numbers", "Median of % Changes in Case Numbers")
+eu.stats = data.frame(time.since.start, time.since.first, eu.total.cases, eu.total.deaths, eu.total.mortality, eu.mean.cases, eu.median.cases)
+names(eu.stats) = c("Days since WHO data began", "Days since first reported case", "Total Cases", "Total Deaths", "Total Mortality (as %)", "Mean of % Changes in Case Numbers", "Median of % Changes in Case Numbers")
 # View(europe.recent); View(pop.data); View(covid21)
 ### time since first case, cases, prc. of total cases, deaths, prc. of total deaths, mortality rate
-time.since.first.case = c(0, 0, 0)
+# time.since.first.case = c(0, 0, 0)
 cases = c(0, 0)
-prc.total.cases = c(0, 0, 0)
+# prc.total.cases = c(0, 0, 0)
 deaths = c(0, 0)
-prc.total.deaths = c(0, 0, 0)
-mortality.rate = c(0, 0, 0)
+# prc.total.deaths = c(0, 0, 0)
+# mortality.rate = c(0, 0, 0)
 summarystats = data.frame(cases, deaths, row.names=c("Selected EU countries", "Selected Non-EU Countries"))
 europop = sum(europe.recent$Population)
 for(country1 in unique(europecovid$Country)){
