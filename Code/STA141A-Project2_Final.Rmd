@@ -232,7 +232,7 @@ for(country1 in unique(europecovid$Country)){
 names(summarystats) = c("Total Cases", "Total Deaths")
 ## REPORT SUMMARY STATS:
 eu.stats; summarystats
-europe.recent %>% select(5:21) %>% stat.desc(basic=F)
+europe.recent %>% select(9:16, 21) %>% stat.desc(basic=F)
 ```
 <!--end of Richard's summary stats-->
 
@@ -240,47 +240,7 @@ europe.recent %>% select(5:21) %>% stat.desc(basic=F)
 
 For France, the number of new cases has a mean of 2503 and a median of 1025, indicating that the distribution is positively skewed. Out of the 215 observations of new cases for France, one of them appears to be negative at a value of -840, which seems to be an outlier but does not have any leverage on the rest of the data as indicated by the Residuals versus Leverage plot generated during sensitivity analysis later on in the report. Additionally, the variable has a lower quartile of 356, an upper quartile of 3742, and a standard deviation of 3301.58. A boxplot of each individual policy was plotted against new cases as well their counts. 
 
-```{r, echo=FALSE}
-## SETTING UP DATA
-face.coverings <- read_csv("~/Documents/face-covering-policies-covid.csv")
-stay.at.home <- read_csv("~/Documents/stay-at-home-covid.csv")
-public.events <- read_csv("~/Documents/public-events-covid.csv")
-
-colnames(face.coverings)[1] <- "Country"
-colnames(stay.at.home)[1] <- "Country"
-colnames(public.events)[1] <- "Country"
-
-colnames(face.coverings)[3] <- "Date_reported"
-colnames(stay.at.home)[3] <- "Date_reported"
-colnames(public.events)[3] <- "Date_reported"
-
-var = "France"
-covid <- filter(covid, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
-face.coverings <- filter(face.coverings, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
-stay.at.home <- filter(stay.at.home, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
-public.events <- filter(public.events, Country == var, Date_reported >= "2020-03-01", Date_reported <= "2020-10-01")
-
-policy.data <- inner_join(covid,face.coverings, by=c("Date_reported","Country"))
-policy.data <- inner_join(policy.data, stay.at.home, by=c("Date_reported","Country"))
-
-drops <- c("Code.x", "Code.y", "Code", "Country_code")
-policy.data[ , !(names(policy.data) %in% drops)]
-#head(policy.data)
-
-policy.data$facial_coverings = factor(policy.data$facial_coverings)
-levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
-#is.factor(policy.data$facial_coverings)
-#head(policy.data)
-#unique(policy.data$facial_coverings)
-
-policy.data$stay_home_requirements = factor(policy.data$stay_home_requirements)
-levels(policy.data$stay_home_requirements) <- list(No_measures = "0", Recommended_not_leave = "1", Required_with_exceptions = "2", Required_miimal_exceptions = "3")
-#is.factor(policy.data$stay_home_requirements)
-#head(policy.data)
-#unique(policy.data$stay_home_requirements)
-```
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 face.coverings <- read_csv("~/Documents/face-covering-policies-covid.csv")
 stay.at.home <- read_csv("~/Documents/stay-at-home-covid.csv")
 public.events <- read_csv("~/Documents/public-events-covid.csv")
@@ -311,7 +271,7 @@ policy.data %>% select(5:12) %>% stat.desc(basic=F)
 
 policy.data$facial_coverings = factor(policy.data$facial_coverings)
 levels(policy.data$facial_coverings) <- list(No_policy = "0", Recommended = "1", Required_in_some = "2", Required_in_all = "3", Required_outside = "4")
-is.factor(policy.data$facial_coverings)
+#is.factor(policy.data$facial_coverings)
 #head(policy.data)
 #unique(policy.data$facial_coverings)
 
@@ -503,7 +463,7 @@ plot(TukeyHSD(COVID.policy.cases.aov, "stay_home_requirements"))
 
 ```
 
-## 5. Model Fitting
+## 5. Model Fitting, & Analysis
 <!--Fit the proposed model in (4) and explain your results.-->
 
 ### Linear Model
@@ -588,7 +548,10 @@ final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+
 ### ANOVA Model
 
 To evaluate whether there is a difference in new cases among different levels of facial covering mandates and stay-at-home restrictions, an F-test was performed. The null hypothesis for this model is that $H_0: \alpha_1=\alpha_2=\alpha_3=0$, meaning that there is no difference in mean new cases among different levels of policies, while the alternative hypothesis is Ha: not all \alpha s are zero, meaning there is a difference in mean new cases among different levels of policies. After calculating the summary of our fit ANOVA mode, the test statistic for facial coverings was 67.94 with a P-value of 2e-16, while the test statistic for stay-at-home requirements was 4.78 with a P-value of 0.00934. Since both of these P-values are much lower than the significance level of 0.05, we reject the null hypothesis and conclude that there exists a difference in mean new cases among different levels of policies for facial coverings and stay-at-home requirements. 
-Tukey’s range test was used to determine which level of each policy was associated with the highest difference in new cases, with a plot of each policy’s 95% confidence interval generated as well. The assumptions of the test are that the groups associated with each mean are normally distributed, homogeneity of variance is present, and the tested observations are independent for the groups. Based on these results, the difference in the number of new cases with facial coverings recommended is higher than that of facial coverings required in some specified shared or public spaces by roughly 514.6282 to 2564.889 new cases with an average of 1539.7588 cases. Additionally, this difference is higher for recommended facial coverings than coverings required outside the home at all times by -2226.5205 to 1337.206 cases with an average of 444.6571 cases. Facial coverings required outside at all times also results in a higher difference than coverings required in some public spaces by 4579.671 to 6721.2047 cases with an average of 5650.4381, in addition to coverings required in all public spaces by 3399.339 to 7012.2229 cases with an average of 5205.7810 cases. Since these ranges do not overlap with zero and each have P-values much smaller than 0.05, then we can conclude with 95% confidence that requiring facial coverings outside at all times results in the least number of new cases compared to other policies. Additionally, based on these results, the difference in the number of new cases did not significantly vary with different levels of stay-at-home restrictions, so the null hypothesis cannot be rejected for this policy and stay-at-home restrictions did not impact the number of new cases. 
+
+Tukey’s range test was used to determine which level of each policy was associated with the highest difference in new cases, with a plot of each policy’s 95% confidence interval generated as well. The assumptions of the test are that the groups associated with each mean are normally distributed, homogeneity of variance is present, and the tested observations are independent for the groups. Based on these results, the difference in the number of new cases with facial coverings recommended is higher than that of facial coverings required in some specified shared or public spaces by roughly 514.6282 to 2564.889 new cases with an average of 1539.7588 cases. Additionally, this difference is higher for recommended facial coverings than coverings required outside the home at all times by -2226.5205 to 1337.206 cases with an average of 444.6571 cases. Facial coverings required outside at all times also results in a higher difference than coverings required in some public spaces by 4579.671 to 6721.2047 cases with an average of 5650.4381, in addition to coverings required in all public spaces by 3399.339 to 7012.2229 cases with an average of 5205.7810 cases. 
+
+Since these ranges do not overlap with zero and each have P-values much smaller than 0.05, then we can conclude with 95% confidence that requiring facial coverings outside at all times results in the least number of new cases compared to other policies. Additionally, based on these results, the difference in the number of new cases did not significantly vary with different levels of stay-at-home restrictions, so the null hypothesis cannot be rejected for this policy and stay-at-home restrictions did not impact the number of new cases. 
 
 
 ## 6. Model Diagnostics
@@ -600,7 +563,7 @@ Based on the fitted-to-residuals plot, the residual terms $\epsilon_i$ seem to h
 
 The aforementioned outliers also make the scale-location plot somewhat nonlinear, and there are some outliers in terms of Cook's distance (including an additional outlier: Bosnia & Herzegovina) and the data's leverage. 
 
-The variance inflation factor has a value of 5.613 (≥5) for HCSpentPerCap when all of the variables from the full model are analyzed, so there is some multicollinearity between the variables. After removing some similar variables (as determined by clusters in the PCA), the VIF is diminished enough to reasonably assume a lack of multicollinearity. 
+The variance inflation factor has a value of 5.613 (≥5) for HCSpentPerCap when all of the variables from the full model are analyzed, so there is some multicollinearity between the variables. After removing some similar variables (as determined by clusters in the PCA), the VIF has decreased enough to reasonably assume a lack of multicollinearity. 
 
 ```{r, echo=FALSE}
 par(mfrow=c(2, 2))
