@@ -1,6 +1,7 @@
 ---
-title: "Project 2 Description"
+title: "WHO COVID-19 Data Analysis: Pre-existing Conditions & Policy Changes"
 date: "`r Sys.Date()`"
+author: "Rahul Uppuluri, Jennifer Li, Richard Ge"
 output: html_document
 ---
 
