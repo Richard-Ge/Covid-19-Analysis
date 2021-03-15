@@ -533,7 +533,7 @@ pca.frame = data.frame(cbind(country=woMaltafiltered$Country, unclass(eu.pca$x))
 # woMfilt.long %>% filter(PC %in% c('PC1','PC2','PC3','PC4','PC5','PC6','PC7')) %>% ggplot(aes(x=country, y=Coefficient, colour = PC)) + geom_line()
 
 ## FINAL MODEL, AFTER REMOVING EXTRA VARS
-final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density, data=withoutmaltaEtc); #summary(final.mortnoMaltaEtc); anova(final.mortnoMaltaEtc)
+final.mortnoMaltaEtc = lm(mortality.now~ObesityPrc+ElderlyPrc+HCSpentPerCap+AQI+km.density, data=withoutmaltaEtc); summary(final.mortnoMaltaEtc); anova(final.mortnoMaltaEtc)
 
 
 # moving average model (dont use this yet! define a good question that we can make a good model for! few confounders, etc.)
